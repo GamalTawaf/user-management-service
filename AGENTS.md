@@ -1,10 +1,10 @@
 # AGENTS.md
 
-User Management API (public portfolio). Durable Python + PostgreSQL backend showcasing JWT/RBAC, audit, outbox, idempotency, rate limiting, and CI gates — without prior-auth domain code.
+User Management API (public portfolio). Durable Python + PostgreSQL backend showcasing JWT/RBAC, audit, outbox, idempotency, rate limiting, and CI gates.
 
 ## Status
 
-**UMS domain rewrite complete** on this public tree. Private `challenge/` take-home is separate and unchanged.
+**UMS domain complete** on this tree.
 
 ## Startup
 

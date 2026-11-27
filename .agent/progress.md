@@ -16,5 +16,5 @@ All `.agent/feature_list.json` items **done** (`ums-001`).
 
 ## Earlier session log (condensed)
 
-- 2026-11-26 — Public portfolio tree rewritten from prior-auth scaffolding to UMS domain
-- 2026-11-27 — Rate limiting; rewrite cleanup (Postman/CI naming, agent docs)
+- 2026-11-26 — UMS domain on the public portfolio tree
+- 2026-11-27 — Rate limiting; Postman/CI naming cleanup

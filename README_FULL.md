@@ -2,7 +2,7 @@
 
 Public portfolio service: organizations + user accounts with role-based access, lifecycle state machine, same-transaction audit, and outbox email.
 
-Challenge-inspired foundation (not the prior-auth product): FastAPI, Postgres, Alembic, JWT RBAC from DB (not token claims), ProblemBody errors, keyset pagination, Idempotency-Key, OTel + Grafana LGTM, mutmut on hot services, path-filtered CI.
+Stack: FastAPI, Postgres, Alembic, JWT RBAC from DB (not token claims), ProblemBody errors, keyset pagination, Idempotency-Key, OTel + Grafana LGTM, mutmut on hot services, path-filtered CI.
 
 Synthetic seed data only. Demo JWT secret is intentional for local runs — never reuse in production.
 
@@ -72,4 +72,4 @@ ruff · call-style · FastAPI compile · Postman fresh · pytest 100% coverage. 
 
 ## AI usage
 
-Planning/implementation assisted by Cursor agents; humans owned the domain rewrite (user/org lifecycle, RBAC matrix, audit/outbox seams). Tests are outside-in HTTP.
+Planning/implementation assisted by Cursor agents; humans owned the domain decisions (user/org lifecycle, RBAC matrix, audit/outbox seams). Tests are outside-in HTTP.

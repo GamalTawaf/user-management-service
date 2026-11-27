@@ -2,7 +2,7 @@
 
 ## Status
 
-**User Management API** on the public portfolio tree. Private Oxbridge take-home (`challenge/`) is separate and unchanged.
+**User Management API** on the public portfolio tree.
 
 ## What is running
 

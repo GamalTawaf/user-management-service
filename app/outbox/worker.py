@@ -1,7 +1,7 @@
 """Poll pending outbox rows and deliver via SMTP.
 
 Run: ``python -m app.outbox.worker`` (Compose service ``outbox-worker``).
-Single-worker take-home: use SKIP LOCKED so a second process would not double-send.
+Single-worker deploy: use SKIP LOCKED so a second process would not double-send.
 """
 
 from __future__ import annotations
