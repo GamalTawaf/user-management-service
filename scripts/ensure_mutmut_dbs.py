@@ -18,7 +18,7 @@ def main() -> int:
 
     base = os.environ.get(
         "DATABASE_URL",
-        "postgresql+psycopg://ums:ums@localhost:5432/user_mgmt",
+        "postgresql+psycopg://ums:ums@localhost:5433/user_mgmt",
     )
     url = make_url(base)
     admin_url = url.set(database="postgres")

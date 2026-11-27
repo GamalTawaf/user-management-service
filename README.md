@@ -9,7 +9,7 @@ For full info (Decisions, CI, AI usage), use [`README_FULL.md`](README_FULL.md).
 ```bash
 docker compose up --build -d
 export JWT_SECRET=dev-only-change-me-32bytes-min!!
-export DATABASE_URL=postgresql+psycopg://ums:ums@localhost:5432/user_mgmt
+export DATABASE_URL=postgresql+psycopg://ums:ums@localhost:5433/user_mgmt
 uv sync
 uv run alembic upgrade head   # also runs on API container start
 uv run python scripts/seed.py
