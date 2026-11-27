@@ -18,6 +18,17 @@ uv run python scripts/seed.py
 API: http://localhost:8000/docs  
 Health: http://localhost:8000/v1/health
 
+```mermaid
+flowchart LR
+  Client --> API
+  API --> Postgres[(Postgres)]
+  API --> Redis[(Redis)]
+  API --> OTel[otel-lgtm]
+  Worker[outbox-worker] --> Postgres
+  Worker --> MailDev
+  Worker --> OTel
+```
+
 ## 2. What you get
 
 | Area | Behavior |
@@ -51,3 +62,9 @@ docker compose up -d
 |------|-----|
 | MailDev | http://localhost:1080 |
 | Grafana LGTM | http://localhost:3000 |
+
+## 5. Next steps (portfolio)
+
+- [ ] Point `JWT_SECRET` at a long random value (see `.env.example`)
+- [ ] Prefer `/v1/ready` once landed for orchestrator probes (DB/Redis)
+- [ ] Review rate-limit XFF trust before putting this behind a reverse proxy

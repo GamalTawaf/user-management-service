@@ -1,4 +1,4 @@
-"""Redact PHI/PII from stdlib logs and OTel ``db.statement`` / ``db.query.text``."""
+"""Redact PII/secrets from stdlib logs and OTel ``db.statement`` / ``db.query.text``."""
 
 from __future__ import annotations
 
@@ -18,9 +18,9 @@ _SQL_STRING_LITERAL = re.compile(r"'(?:[^']|'')*'")
 _EMAIL = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 _JWT = re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b")
 _BEARER = re.compile(r"(?i)\bBearer\s+\S+")
-_FIELD_NAMES = (
-    "clinical_note|denial_reason|authorization|password|ssn|date_of_birth|dob|jwt_secret|member_id"
-)
+# Email/display_name are handled via `_EMAIL` / `_SENSITIVE_KEYS` so dict reprs
+# like `{'display_name': …, 'ok': 'keep'}` are not swallowed by the field regex.
+_FIELD_NAMES = "password|jwt_secret|authorization|access_token|refresh_token"
 # Quoted value, or unquoted run until the next known field / end.
 _SENSITIVE_FIELD = re.compile(
     rf"(?i)([\"']?(?:{_FIELD_NAMES})[\"']?\s*[:=]\s*)"
@@ -39,7 +39,7 @@ def redact_text(text: str) -> str:
 
 
 def scrub_db_statement(statement: str) -> str:
-    """Mask PHI in SQL text: known field patterns, then all quoted literals."""
+    """Mask secrets/PII in SQL text: known field patterns, then all quoted literals."""
     out = redact_text(statement)
     sql_placeholder = f"'{REDACTED}'"
     out = _SQL_STRING_LITERAL.sub(sql_placeholder, out)
@@ -108,15 +108,13 @@ def _redact_value(value: Any) -> Any:
 
 _SENSITIVE_KEYS = frozenset(
     {
-        "clinical_note",
-        "denial_reason",
-        "authorization",
         "password",
-        "ssn",
-        "date_of_birth",
-        "dob",
         "jwt_secret",
-        "member_id",
+        "authorization",
+        "email",
+        "display_name",
+        "access_token",
+        "refresh_token",
     }
 )
 
@@ -132,10 +130,19 @@ class PiiRedactingFilter(logging.Filter):
     """Mutates the record in place so every handler sees redacted text."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if isinstance(record.msg, str):
-            record.msg = redact_text(record.msg)
+        # Redact structured args first, then format, then scrub the rendered line.
+        # Avoids mangling templates like ``email=%s`` before %-args apply.
         if record.args:
             record.args = _redact_value(record.args)
+        if not isinstance(record.msg, str):
+            return True
+        try:
+            rendered = record.getMessage()
+        except Exception:
+            record.msg = redact_text(record.msg)
+            return True
+        record.msg = redact_text(rendered)
+        record.args = ()
         return True
 
 
