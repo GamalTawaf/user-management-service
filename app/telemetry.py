@@ -32,6 +32,29 @@ _providers_ready = False
 _sqlalchemy_instrumented = False
 _redis_instrumented = False
 
+# Uvicorn access/error loggers default to propagate=False, so root-only OTEL
+# handlers never see request lines that still appear in docker logs.
+_OTLP_LOG_TARGETS = (
+    "",
+    "uvicorn",
+    "uvicorn.access",
+    "uvicorn.error",
+    "app",
+)
+
+
+def attach_otlp_logging_handler(logger_provider: LoggerProvider) -> LoggingHandler:
+    """Install OTEL LoggingHandler on root + uvicorn loggers; force INFO."""
+    handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+    for name in _OTLP_LOG_TARGETS:
+        logger = logging.getLogger(name)
+        already = any(isinstance(existing, LoggingHandler) for existing in logger.handlers)
+        if not already:
+            logger.addHandler(handler)
+        if logger.level == logging.NOTSET or logger.level > logging.INFO:
+            logger.setLevel(logging.INFO)
+    return handler
+
 
 def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
     global _providers_ready, _sqlalchemy_instrumented, _redis_instrumented
@@ -52,8 +75,7 @@ def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
             log_processor = BatchLogRecordProcessor(log_exporter)
             logger_provider.add_log_record_processor(log_processor)
             set_logger_provider(logger_provider)
-            otel_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
-            logging.getLogger().addHandler(otel_handler)
+            attach_otlp_logging_handler(logger_provider)
         else:
             console_spans = ScrubbingSpanExporter(ConsoleSpanExporter())
             tracer_provider.add_span_processor(BatchSpanProcessor(console_spans))

@@ -340,6 +340,38 @@ def test_worker_run_loop_once(monkeypatch, db: Session):
     worker.run_loop(once=True)
 
 
+def test_worker_run_once_logs_delivery(monkeypatch, db: Session, client: TestClient, caplog):
+    import logging
+
+    from app.outbox import worker
+
+    client.post(
+        "/v1/users",
+        headers=role_headers(client, "admin"),
+        json={"email": "worker-log@example.com", "display_name": "WL", "status": "active"},
+    )
+
+    class _Sess:
+        def __enter__(self):
+            return db
+
+        def __exit__(self, *args):
+            return False
+
+    def _session_factory():
+        return _Sess()
+
+    def _fake_process(_db):
+        return 2
+
+    monkeypatch.setattr(worker, "SessionLocal", _session_factory)
+    monkeypatch.setattr(worker, "process_batch", _fake_process)
+    with caplog.at_level(logging.INFO, logger="app.outbox.worker"):
+        delivered = worker.run_once()
+    assert delivered == 2
+    assert "outbox delivered batch_size=2" in caplog.text
+
+
 def test_mailer_success(monkeypatch):
     from app import config
     from app.outbox import mailer
