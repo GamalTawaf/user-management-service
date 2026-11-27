@@ -37,7 +37,7 @@ Every create / update / activate / disable / enable / org_create writes `audit_e
 
 ### Outbox
 
-`user_welcome` on create; `user_status` on activate/disable/enable. Worker polls with `SKIP LOCKED` → MailDev.
+`user_welcome` on create; `user_status` on activate/disable/enable. Worker polls with `SKIP LOCKED` → MailDev. Transient send errors leave the row `pending` and increment `attempts` until `OUTBOX_MAX_ATTEMPTS` (default 5), then `failed`.
 
 ### Idempotency
 
