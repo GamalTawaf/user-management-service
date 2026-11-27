@@ -1,5 +1,9 @@
-from fastapi.testclient import TestClient
+import uuid
 
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.identity.models import User
 from tests.conftest import SEED_PASSWORD, assert_detail, auth
 
 
@@ -73,3 +77,28 @@ def test_create_user_with_password_can_login(client: TestClient):
         json={"email": "loginable@example.com", "password": "create-pass-99"},
     )
     assert response.status_code == 200
+
+
+def test_create_user_without_password_stores_null_hash(client: TestClient, db: Session):
+    created = client.post(
+        "/v1/users",
+        headers=auth(client.seed["tokens"]["admin"]),
+        json={
+            "email": "nopass@example.com",
+            "display_name": "No Pass",
+            "status": "active",
+        },
+    )
+    assert created.status_code == 201
+    user_id = uuid.UUID(created.json()["uuid"])
+    user = db.get(User, user_id)
+    assert user is not None
+    assert user.password_hash is None
+    assert_detail(
+        client.post(
+            "/v1/auth/login",
+            json={"email": "nopass@example.com", "password": SEED_PASSWORD},
+        ),
+        401,
+        "Invalid credentials",
+    )

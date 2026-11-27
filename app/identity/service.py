@@ -14,7 +14,7 @@ def login(db: Session, *, email: str, password: str) -> str:
     email_match = User.email == normalized
     stmt = select(User).where(email_match)
     user = db.scalar(stmt)
-    if user is None or not user.password_hash:
+    if user is None or user.password_hash is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
