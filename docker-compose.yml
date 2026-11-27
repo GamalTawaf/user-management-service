@@ -36,6 +36,8 @@ services:
       - "3000:3000"
       - "4317:4317"
       - "4318:4318"
+    # Image HEALTHCHECK covers Grafana/Loki/Tempo/collector; wait for it
+    # before api/worker so OTLP HTTP to :4318 is not a startup race.
 
   api:
     build: .
@@ -56,7 +58,7 @@ services:
       redis:
         condition: service_healthy
       otel-lgtm:
-        condition: service_started
+        condition: service_healthy
 
   outbox-worker:
     build: .
@@ -79,4 +81,4 @@ services:
       maildev:
         condition: service_started
       otel-lgtm:
-        condition: service_started
+        condition: service_healthy
