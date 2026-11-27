@@ -52,7 +52,7 @@ Token-bucket limiter runs as ASGI middleware (before auth):
 - Defaults: capacity `120`, refill `2` tokens/sec (`RATE_LIMIT_CAPACITY`, `RATE_LIMIT_REFILL_PER_SECOND`)
 - Exempt: `/v1/health`, OpenAPI docs paths
 - Responses: `X-RateLimit-Limit` / `X-RateLimit-Remaining`; on reject `429` ProblemBody (`rate_limited`) + `Retry-After`
-- Telemetry: `ums.rate_limit.allowed` / `ums.rate_limit.rejected` counters, `rate_limit.consume` spans, Redis client instrumentation
+- Telemetry: `ums.rate_limit.allowed` / `ums.rate_limit.rejected` counters, `rate_limit.consume` spans, Redis client instrumentation; stdlib/uvicorn logs via OTLP → Loki when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`LOG_LEVEL`, default `INFO`)
 
 ### Cut list
 

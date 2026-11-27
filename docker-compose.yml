@@ -48,6 +48,7 @@ services:
       RATE_LIMIT_REFILL_PER_SECOND: "2"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
       OTEL_SERVICE_NAME: user-management-api
+      LOG_LEVEL: INFO
     depends_on:
       db:
         condition: service_healthy
@@ -69,6 +70,8 @@ services:
       OUTBOX_BATCH_SIZE: "20"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
       OTEL_SERVICE_NAME: user-management-outbox-worker
+      LOG_LEVEL: INFO
+
     depends_on:
       db:
         condition: service_healthy

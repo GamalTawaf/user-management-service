@@ -145,14 +145,18 @@ def _noop_send(*_a, **_k):
     return None
 
 
-def test_mailer_noop_and_outbox(db: Session, client: TestClient):
+def test_mailer_noop_and_outbox(db: Session, client: TestClient, caplog):
+    import logging
+
     send_smtp("a@b.co", "s", "b")  # smtp_host empty → no-op
     client.post(
         "/v1/users",
         headers=role_headers(client, "admin"),
         json={"email": "outbox@example.com", "display_name": "O", "status": "active"},
     )
-    assert process_batch(db, send_fn=_noop_send) >= 1
+    with caplog.at_level(logging.INFO, logger="app.outbox.services"):
+        assert process_batch(db, send_fn=_noop_send) >= 1
+    assert "outbox_send_ok" in caplog.text
     assert process_batch(db, send_fn=_noop_send) == 0
 
     def boom(*_a, **_k):
@@ -167,7 +171,10 @@ def test_mailer_noop_and_outbox(db: Session, client: TestClient):
         )
     )
     db.flush()
-    assert process_batch(db, send_fn=boom) == 1
+    with caplog.at_level(logging.WARNING, logger="app.outbox.services"):
+        assert process_batch(db, send_fn=boom) == 1
+    assert "outbox_send_failed" in caplog.text
+    assert "smtp down" in caplog.text
 
 
 def test_worker_run_once(db: Session, monkeypatch):
@@ -338,6 +345,38 @@ def test_worker_run_loop_once(monkeypatch, db: Session):
 
     monkeypatch.setattr(worker, "SessionLocal", _factory)
     worker.run_loop(once=True)
+
+
+def test_worker_run_once_logs_delivery(monkeypatch, db: Session, client: TestClient, caplog):
+    import logging
+
+    from app.outbox import worker
+
+    client.post(
+        "/v1/users",
+        headers=role_headers(client, "admin"),
+        json={"email": "worker-log@example.com", "display_name": "WL", "status": "active"},
+    )
+
+    class _Sess:
+        def __enter__(self):
+            return db
+
+        def __exit__(self, *args):
+            return False
+
+    def _session_factory():
+        return _Sess()
+
+    def _fake_process(_db):
+        return 2
+
+    monkeypatch.setattr(worker, "SessionLocal", _session_factory)
+    monkeypatch.setattr(worker, "process_batch", _fake_process)
+    with caplog.at_level(logging.INFO, logger="app.outbox.worker"):
+        delivered = worker.run_once()
+    assert delivered == 2
+    assert "outbox delivered batch_size=2" in caplog.text
 
 
 def test_mailer_success(monkeypatch):

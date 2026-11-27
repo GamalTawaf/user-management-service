@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 
@@ -11,6 +12,7 @@ from app.identity.models import User
 from app.shared.errors import FieldError, NotFoundError
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_log = logging.getLogger(__name__)
 
 
 def validate_email(value: str) -> list[FieldError]:
@@ -81,4 +83,6 @@ def audit_commit_refresh(
     )
     db.commit()
     db.refresh(user)
+    user_id = str(user.uuid)
+    _log.info("user_mutation action=%s user_id=%s", action, user_id)
     return user

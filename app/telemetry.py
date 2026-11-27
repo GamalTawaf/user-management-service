@@ -32,11 +32,48 @@ _providers_ready = False
 _sqlalchemy_instrumented = False
 _redis_instrumented = False
 
+# Uvicorn access/error loggers default to propagate=False, so root-only OTEL
+# handlers never see request lines that still appear in docker logs.
+_OTLP_LOG_TARGETS = (
+    "",
+    "uvicorn",
+    "uvicorn.access",
+    "uvicorn.error",
+    "app",
+)
+
+
+def parse_log_level(value: str) -> int:
+    """Map env names like INFO/DEBUG to stdlib levels; unknown → INFO."""
+    mapping = logging.getLevelNamesMapping()
+    normalized = value.strip().upper()
+    level = mapping.get(normalized)
+    if level is None:
+        return logging.INFO
+    return level
+
+
+def attach_otlp_logging_handler(
+    logger_provider: LoggerProvider,
+    *,
+    level: int,
+) -> LoggingHandler:
+    """Install OTEL LoggingHandler on root + uvicorn loggers at `level`."""
+    handler = LoggingHandler(level=level, logger_provider=logger_provider)
+    for name in _OTLP_LOG_TARGETS:
+        logger = logging.getLogger(name)
+        already = any(isinstance(existing, LoggingHandler) for existing in logger.handlers)
+        if not already:
+            logger.addHandler(handler)
+        logger.setLevel(level)
+    return handler
+
 
 def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
     global _providers_ready, _sqlalchemy_instrumented, _redis_instrumented
 
     install_pii_log_filter()
+    log_level = parse_log_level(settings.log_level)
 
     if not _providers_ready:
         resource = Resource.create({"service.name": settings.otel_service_name})
@@ -52,12 +89,12 @@ def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
             log_processor = BatchLogRecordProcessor(log_exporter)
             logger_provider.add_log_record_processor(log_processor)
             set_logger_provider(logger_provider)
-            otel_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
-            logging.getLogger().addHandler(otel_handler)
+            attach_otlp_logging_handler(logger_provider, level=log_level)
         else:
             console_spans = ScrubbingSpanExporter(ConsoleSpanExporter())
             tracer_provider.add_span_processor(BatchSpanProcessor(console_spans))
             metric_reader = PeriodicExportingMetricReader(ConsoleMetricExporter())
+            logging.getLogger().setLevel(log_level)
 
         trace.set_tracer_provider(tracer_provider)
         meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
@@ -65,7 +102,10 @@ def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
 
         LoggingInstrumentor().instrument(set_logging_format=True)
         _providers_ready = True
-        logging.getLogger(__name__).info("telemetry providers configured")
+        logging.getLogger(__name__).info(
+            "telemetry providers configured log_level=%s",
+            settings.log_level,
+        )
 
     if not _sqlalchemy_instrumented:
         tracer_provider = trace.get_tracer_provider()

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-only-change-me-32bytes-min!!"
     jwt_algorithm: str = "HS256"
     otel_service_name: str = "user-management-api"
+    log_level: str = "INFO"
     max_request_body_bytes: int = 262_144
     smtp_host: str = ""
     smtp_port: int = 1025
