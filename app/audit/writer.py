@@ -13,15 +13,13 @@ def write_audit(
     actor_user_id: uuid.UUID,
     action: str,
     payload: dict,
-    request_id: uuid.UUID | None = None,
-    intake_rejection_id: uuid.UUID | None = None,
+    subject_user_id: uuid.UUID | None = None,
 ) -> AuditEvent:
     event = AuditEvent(
         actor_user_id=actor_user_id,
         action=action,
         payload=payload,
-        request_id=request_id,
-        intake_rejection_id=intake_rejection_id,
+        subject_user_id=subject_user_id,
     )
     db.add(event)
     return event

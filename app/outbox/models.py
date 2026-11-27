@@ -10,7 +10,8 @@ from app.db import Base
 
 
 class OutboxKind(enum.StrEnum):
-    decision_notice = "decision_notice"
+    user_welcome = "user_welcome"
+    user_status = "user_status"
 
 
 class OutboxStatus(enum.StrEnum):
@@ -20,7 +21,7 @@ class OutboxStatus(enum.StrEnum):
 
 
 class OutboxEvent(Base):
-    """Transactional outbox row — e.g. email the provider office after a decision."""
+    """Transactional outbox row — e.g. welcome email after user create."""
 
     __tablename__ = "outbox_events"
     __table_args__ = (Index("ix_outbox_events_status_created", "status", "created_at"),)
@@ -29,11 +30,11 @@ class OutboxEvent(Base):
         "id", UUID(as_uuid=True), primary_key=True, default=uuid_lib.uuid4
     )
     kind: Mapped[str] = mapped_column(String(64), nullable=False)
-    request_id: Mapped[uuid_lib.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("prior_auth_requests.id"), nullable=True
+    subject_user_id: Mapped[uuid_lib.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
-    practice_id: Mapped[uuid_lib.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("practices.id"), nullable=False
+    org_id: Mapped[uuid_lib.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True
     )
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default=OutboxStatus.pending)

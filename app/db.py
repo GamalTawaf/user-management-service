@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import settings
 
 # Application data schema (not Postgres' default `public`).
-APP_SCHEMA = "prior_auth"
+APP_SCHEMA = "user_mgmt"
 
 engine = create_engine(
     settings.database_url,

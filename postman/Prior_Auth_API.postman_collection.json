@@ -1,13 +1,134 @@
 {
   "info": {
-    "name": "Prior Auth API",
+    "name": "User Management API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Generated from FastAPI OpenAPI with seed demo bodies. Run `scripts/seed.py`, import env, then Submit \u2192 Claim \u2192 Decide. Tests scripts auto-set request_id / procedure_id / correlation_id. Do not hand-edit; regenerate."
+    "description": ""
   },
   "item": [
     {
-      "name": "Submit prior auth",
+      "name": "Activate Route",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/{{user_id}}/activate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            ":user_id",
+            "activate"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function setEnv(key, value) {",
+              "  if (value === undefined || value === null || value === \"\") return;",
+              "  const s = String(value);",
+              "  pm.environment.set(key, s);",
+              "  pm.collectionVariables.set(key, s);",
+              "}",
+              "function parseBody() {",
+              "  try { return pm.response.json(); } catch (e) { return null; }",
+              "}",
+              "const body = parseBody();",
+              "if (body && body.uuid) setEnv('user_id', body.uuid);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Org",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/orgs",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "orgs"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Org\",\n  \"notification_email\": \"ops@neworg.example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Create User Route",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
         "method": "POST",
         "header": [
           {
@@ -17,33 +138,22 @@
           {
             "key": "Idempotency-Key",
             "value": "{{idempotency_key}}",
-            "description": "Optional; same key+body replays 201"
+            "type": "text"
           }
         ],
         "url": {
-          "raw": "{{base_url}}/v1/prior-auths",
+          "raw": "{{base_url}}/v1/users",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "v1",
-            "prior-auths"
+            "users"
           ]
         },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{office_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Optional `Idempotency-Key` (unique per practice): same key + same body replays the stored 201; same key + different body \u2192 409 `idempotency_key_reuse`. Keys are retained ~24h (prune optional).",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"member_id\": \"{{member_id}}\",\n  \"diagnosis_icd10\": \"J06.9\",\n  \"date_of_service\": \"{{date_of_service}}\",\n  \"clinical_note\": \"Demo clinical note for Postman\",\n  \"procedures\": [\n    {\n      \"code\": \"99213\",\n      \"units\": 1\n    }\n  ]\n}",
+          "raw": "{\n  \"email\": \"new.user@example.com\",\n  \"display_name\": \"New User\",\n  \"role\": \"member\",\n  \"status\": \"invited\",\n  \"org_id\": \"{{org_id}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -57,13 +167,8 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "// Fresh key each Send so Submit creates a new prior auth (happy-path testing).",
               "pm.environment.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));",
-              "pm.collectionVariables.set('idempotency_key', pm.environment.get('idempotency_key'));",
-              "// DOS must be today-or-later for intake; refresh on each Send.",
-              "const dos = new Date().toISOString().slice(0, 10);",
-              "pm.environment.set('date_of_service', dos);",
-              "pm.collectionVariables.set('date_of_service', dos);"
+              "pm.collectionVariables.set('idempotency_key', pm.environment.get('idempotency_key'));"
             ]
           }
         },
@@ -78,469 +183,19 @@
               "  pm.environment.set(key, s);",
               "  pm.collectionVariables.set(key, s);",
               "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
               "function parseBody() {",
               "  try { return pm.response.json(); } catch (e) { return null; }",
               "}",
               "const body = parseBody();",
-              "capturePriorAuth(body);",
-              "captureCorrelation(body);"
+              "if (body && body.uuid) setEnv('user_id', body.uuid);"
             ]
           }
         }
       ]
     },
     {
-      "name": "List Prior Auths",
+      "name": "Disable Route",
       "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "20",
-              "enabled": true
-            },
-            {
-              "key": "after",
-              "value": "",
-              "description": "optional cursor id",
-              "enabled": false
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{office_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get Prior Auth",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths/{{request_id}}",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths",
-            ":request_id"
-          ],
-          "variable": [
-            {
-              "key": "request_id",
-              "value": "{{request_id}}"
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{office_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Review Queue",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/review-queue",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "review-queue"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "20",
-              "enabled": true
-            },
-            {
-              "key": "after",
-              "value": "",
-              "description": "optional cursor id",
-              "enabled": false
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{reviewer_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Claim",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths/{{request_id}}/claim",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths",
-            ":request_id",
-            "claim"
-          ],
-          "variable": [
-            {
-              "key": "request_id",
-              "value": "{{request_id}}"
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{reviewer_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Decide",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths/{{request_id}}/decision",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths",
-            ":request_id",
-            "decision"
-          ],
-          "variable": [
-            {
-              "key": "request_id",
-              "value": "{{request_id}}"
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{reviewer_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response.",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"outcomes\": [\n    {\n      \"procedure_id\": \"{{procedure_id}}\",\n      \"decision\": \"approved\"\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reassign",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths/{{request_id}}/reassign",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths",
-            ":request_id",
-            "reassign"
-          ],
-          "variable": [
-            {
-              "key": "request_id",
-              "value": "{{request_id}}"
-            }
-          ]
-        },
         "auth": {
           "type": "bearer",
           "bearer": [
@@ -551,60 +206,7 @@
             }
           ]
         },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response.",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"reviewer_id\": \"{{reviewer_id}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reviewers Workload",
-      "request": {
-        "method": "GET",
+        "method": "POST",
         "header": [
           {
             "key": "Content-Type",
@@ -612,16 +214,37 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/v1/reviewers/workload",
+          "raw": "{{base_url}}/v1/users/{{user_id}}/disable",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "v1",
-            "reviewers",
-            "workload"
+            "users",
+            ":user_id",
+            "disable"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
           ]
         },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Enable Route",
+      "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
@@ -632,97 +255,55 @@
             }
           ]
         },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/{{user_id}}/enable",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            ":user_id",
+            "enable"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
       }
     },
     {
-      "name": "My Prior Auths",
+      "name": "Get Org",
       "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/me/prior-auths",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "me",
-            "prior-auths"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "20",
-              "enabled": true
-            },
-            {
-              "key": "after",
-              "value": "",
-              "description": "optional cursor id",
-              "enabled": false
-            }
-          ]
-        },
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "{{member_token}}",
+              "value": "{{admin_token}}",
               "type": "string"
             }
           ]
         },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "My Prior Auth",
-      "request": {
         "method": "GET",
         "header": [
           {
@@ -731,191 +312,97 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/v1/me/prior-auths/{{request_id}}",
+          "raw": "{{base_url}}/v1/orgs/{{org_id}}",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "v1",
-            "me",
-            "prior-auths",
-            ":request_id"
+            "orgs",
+            ":org_id"
           ],
           "variable": [
             {
-              "key": "request_id",
-              "value": "{{request_id}}"
+              "key": "org_id",
+              "value": "{{org_id}}"
             }
           ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{member_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "if (!body) return;",
-              "if (Array.isArray(body) && body.length) {",
-              "  capturePriorAuth(body[0]);",
-              "} else {",
-              "  capturePriorAuth(body);",
-              "  captureCorrelation(body);",
-              "}"
-            ]
-          }
         }
-      ]
-    },
-    {
-      "name": "Lookup Intake Rejection",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/support/intake-rejections/{{correlation_id}}",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "support",
-            "intake-rejections",
-            ":correlation_id"
-          ],
-          "variable": [
-            {
-              "key": "correlation_id",
-              "value": "{{correlation_id}}"
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{office_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "function setEnv(key, value) {",
-              "  if (value === undefined || value === null || value === \"\") return;",
-              "  const s = String(value);",
-              "  pm.environment.set(key, s);",
-              "  pm.collectionVariables.set(key, s);",
-              "}",
-              "function capturePriorAuth(body) {",
-              "  if (!body || typeof body !== \"object\" || Array.isArray(body)) return;",
-              "  if (body.uuid) setEnv(\"request_id\", body.uuid);",
-              "  const procs = body.procedures;",
-              "  if (Array.isArray(procs) && procs.length && procs[0] && procs[0].uuid) {",
-              "    setEnv(\"procedure_id\", procs[0].uuid);",
-              "  }",
-              "}",
-              "function captureCorrelation(body) {",
-              "  if (body && body.correlation_id) setEnv(\"correlation_id\", body.correlation_id);",
-              "}",
-              "function parseBody() {",
-              "  try { return pm.response.json(); } catch (e) { return null; }",
-              "}",
-              "const body = parseBody();",
-              "captureCorrelation(body);"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get Audit",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/v1/prior-auths/{{request_id}}/audit",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "v1",
-            "prior-auths",
-            ":request_id",
-            "audit"
-          ],
-          "variable": [
-            {
-              "key": "request_id",
-              "value": "{{request_id}}"
-            }
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{auditor_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
       }
+    },
+    {
+      "name": "Get User Route",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/{{user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            ":user_id"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function setEnv(key, value) {",
+              "  if (value === undefined || value === null || value === \"\") return;",
+              "  const s = String(value);",
+              "  pm.environment.set(key, s);",
+              "  pm.collectionVariables.set(key, s);",
+              "}",
+              "function parseBody() {",
+              "  try { return pm.response.json(); } catch (e) { return null; }",
+              "}",
+              "const body = parseBody();",
+              "if (body && body.uuid) setEnv('user_id', body.uuid);"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Health",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
         "header": [
           {
@@ -932,51 +419,284 @@
             "v1",
             "health"
           ]
-        },
+        }
+      }
+    },
+    {
+      "name": "List Orgs",
+      "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "{{token}}",
+              "value": "{{admin_token}}",
               "type": "string"
             }
           ]
         },
-        "description": "Generated demo request. Tests scripts write request_id / procedure_id / correlation_id into the active environment from the response."
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/orgs",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "orgs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Users",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Me",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{member_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Me Patch",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{member_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "me"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"display_name\": \"Updated Name\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Patch User",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/{{user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            ":user_id"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"display_name\": \"Patched User\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "User Audit",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auditor_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/{{user_id}}/audit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            ":user_id",
+            "audit"
+          ],
+          "variable": [
+            {
+              "key": "user_id",
+              "value": "{{user_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "User Stats",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/users/stats",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            "stats"
+          ]
+        }
       }
     }
   ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
-    ]
-  },
   "variable": [
     {
-      "key": "request_id",
-      "value": "00000000-0000-4000-8000-000000000001"
+      "key": "base_url",
+      "value": "http://localhost:8000"
     },
     {
-      "key": "procedure_id",
-      "value": "00000000-0000-4000-8000-000000000002"
+      "key": "user_id",
+      "value": "66666666-6666-6666-6666-666666666666"
     },
     {
-      "key": "correlation_id",
-      "value": "demo-correlation"
+      "key": "org_id",
+      "value": "11111111-1111-1111-1111-111111111111"
     },
     {
       "key": "idempotency_key",
-      "value": "demo-submit-1"
-    },
-    {
-      "key": "date_of_service",
-      "value": "2026-11-26"
+      "value": "postman-demo-key"
     }
   ]
 }

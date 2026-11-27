@@ -1,4 +1,4 @@
-"""Submit-only Idempotency-Key storage and helpers."""
+"""Create-user Idempotency-Key storage and helpers."""
 
 from __future__ import annotations
 
@@ -12,27 +12,23 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.db import Base
-from app.prior_auth.schemas import PriorAuthOut, SubmitPriorAuthIn
 from app.shared.errors import ConflictError, FieldError, raise_bad_request
+from app.users.schemas import CreateUserIn, UserOut
 
 MAX_KEY_LENGTH = 255
-
-
 _SERVER_NOW = func.now()
 
 
 class IdempotencyRecord(Base):
-    __tablename__ = "prior_auth_idempotency_keys"
+    __tablename__ = "user_idempotency_keys"
 
-    practice_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("practices.id"), primary_key=True
-    )
+    org_scope: Mapped[str] = mapped_column(String(64), primary_key=True)
     key: Mapped[str] = mapped_column(String(MAX_KEY_LENGTH), primary_key=True)
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     response_status: Mapped[int] = mapped_column(Integer, nullable=False)
     response_body: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    request_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("prior_auth_requests.id"), nullable=False
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=_SERVER_NOW
@@ -40,7 +36,6 @@ class IdempotencyRecord(Base):
 
 
 def normalize_key(raw: str | None) -> str | None:
-    """None if header absent; raise 400 if empty/whitespace/too long."""
     if raw is None:
         return None
     key = raw.strip()
@@ -57,7 +52,7 @@ def normalize_key(raw: str | None) -> str | None:
     return key
 
 
-def body_hash(body: SubmitPriorAuthIn) -> str:
+def body_hash(body: CreateUserIn) -> str:
     payload = body.model_dump(mode="json")
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     encoded = canonical.encode()
@@ -65,15 +60,19 @@ def body_hash(body: SubmitPriorAuthIn) -> str:
     return digest.hexdigest()
 
 
-def get_record(db: Session, practice_id: uuid.UUID, key: str) -> IdempotencyRecord | None:
+def scope_for_admin(admin_id: uuid.UUID) -> str:
+    return f"admin:{admin_id}"
+
+
+def get_record(db: Session, org_scope: str, key: str) -> IdempotencyRecord | None:
     stmt = select(IdempotencyRecord).where(
-        IdempotencyRecord.practice_id == practice_id,
+        IdempotencyRecord.org_scope == org_scope,
         IdempotencyRecord.key == key,
     )
     return db.scalar(stmt)
 
 
-def resolve_existing(record: IdempotencyRecord, request_hash: str) -> PriorAuthOut:
+def resolve_existing(record: IdempotencyRecord, request_hash: str) -> UserOut:
     if record.request_hash != request_hash:
         raise ConflictError(
             "Idempotency-Key was already used with a different request body",
@@ -85,25 +84,26 @@ def resolve_existing(record: IdempotencyRecord, request_hash: str) -> PriorAuthO
                 )
             ],
         )
-    return PriorAuthOut.model_validate(record.response_body)
+    return UserOut.model_validate(record.response_body)
 
 
 def store_record(
     db: Session,
     *,
-    practice_id: uuid.UUID,
+    org_scope: str,
     key: str,
     request_hash: str,
-    request_id: uuid.UUID,
-    response: PriorAuthOut,
+    user_id: uuid.UUID,
+    response: UserOut,
 ) -> None:
     response_body = response.model_dump(mode="json")
-    record = IdempotencyRecord(
-        practice_id=practice_id,
-        key=key,
-        request_hash=request_hash,
-        response_status=201,
-        response_body=response_body,
-        request_id=request_id,
+    db.add(
+        IdempotencyRecord(
+            org_scope=org_scope,
+            key=key,
+            request_hash=request_hash,
+            response_status=201,
+            response_body=response_body,
+            user_id=user_id,
+        )
     )
-    db.add(record)

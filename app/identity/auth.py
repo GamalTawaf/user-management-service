@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.db import get_db
-from app.identity.models import User, UserRole
+from app.identity.models import User, UserRole, UserStatus
 from app.identity.schemas import UserContext
 
 bearer = HTTPBearer(auto_error=False)
@@ -22,8 +22,7 @@ def mint_token(user: User, *, hours: int = 24, exp: datetime | None = None) -> s
     payload = {
         "sub": str(user.uuid),
         "role": user.role.value,
-        "practice_id": str(user.practice_id) if user.practice_id else None,
-        "member_id": str(user.member_id) if user.member_id else None,
+        "org_id": str(user.org_id) if user.org_id else None,
         "email": user.email,
         "exp": exp if exp is not None else datetime.now(UTC) + timedelta(hours=hours),
     }
@@ -56,11 +55,15 @@ def get_current_user(
     user = db.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
+    if user.status == UserStatus.disabled:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
+    if user.status == UserStatus.invited:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account not activated")
     return UserContext(
         user_id=user.uuid,
         role=user.role,
-        practice_id=user.practice_id,
-        member_id=user.member_id,
+        status=user.status,
+        org_id=user.org_id,
         email=user.email,
     )
 

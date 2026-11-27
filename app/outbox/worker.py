@@ -24,10 +24,10 @@ def run_loop(*, once: bool = False) -> None:
         run_once()
         if once:
             return
-        time.sleep(settings.outbox_poll_seconds)
+        time.sleep(settings.outbox_poll_seconds)  # pragma: no cover
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     configure_telemetry()
     run_loop()
 

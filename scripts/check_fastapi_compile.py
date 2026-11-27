@@ -32,10 +32,10 @@ def main() -> int:
         return 1
     required = (
         "/v1/health",
-        "/v1/prior-auths",
-        "/v1/review-queue",
-        "/v1/me/prior-auths",
-        "/v1/support/intake-rejections/{correlation_id}",
+        "/v1/me",
+        "/v1/users",
+        "/v1/users/stats",
+        "/v1/orgs",
     )
     missing = [p for p in required if p not in paths]
     if missing:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create prior_auth_mutmut_0 .. N-1 for parallel mutmut children."""
+"""Create user_mgmt_mutmut_0 .. N-1 for parallel mutmut children."""
 
 from __future__ import annotations
 
@@ -18,10 +18,9 @@ def main() -> int:
 
     base = os.environ.get(
         "DATABASE_URL",
-        "postgresql+psycopg://prior:prior@localhost:5432/prior_auth",
+        "postgresql+psycopg://ums:ums@localhost:5432/user_mgmt",
     )
     url = make_url(base)
-    # CREATE DATABASE cannot run inside a transaction against the target DB.
     admin_url = url.set(database="postgres")
     engine = create_engine(
         admin_url.render_as_string(hide_password=False), isolation_level="AUTOCOMMIT"
@@ -29,7 +28,7 @@ def main() -> int:
 
     with engine.connect() as conn:
         for i in range(n):
-            name = f"prior_auth_mutmut_{i}"
+            name = f"user_mgmt_mutmut_{i}"
             exists = conn.execute(
                 text("SELECT 1 FROM pg_database WHERE datname = :n"),
                 {"n": name},
@@ -37,7 +36,6 @@ def main() -> int:
             if exists:
                 print(f"exists {name}")
                 continue
-            # Name is controlled (prefix + digit index only).
             conn.execute(text(f'CREATE DATABASE "{name}"'))
             print(f"created {name}")
     return 0

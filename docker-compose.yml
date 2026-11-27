@@ -2,13 +2,13 @@ services:
   db:
     image: postgres:19
     environment:
-      POSTGRES_USER: prior
-      POSTGRES_PASSWORD: prior
-      POSTGRES_DB: prior_auth
+      POSTGRES_USER: ums
+      POSTGRES_PASSWORD: ums
+      POSTGRES_DB: user_mgmt
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prior -d prior_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ums -d user_mgmt"]
       interval: 2s
       timeout: 5s
       retries: 15
@@ -31,10 +31,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg://prior:prior@db:5432/prior_auth
+      DATABASE_URL: postgresql+psycopg://ums:ums@db:5432/user_mgmt
       JWT_SECRET: dev-only-change-me-32bytes-min!!
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
-      OTEL_SERVICE_NAME: prior-auth-api
+      OTEL_SERVICE_NAME: user-management-api
     depends_on:
       db:
         condition: service_healthy
@@ -45,15 +45,15 @@ services:
     build: .
     command: ["python", "-m", "app.outbox.worker"]
     environment:
-      DATABASE_URL: postgresql+psycopg://prior:prior@db:5432/prior_auth
+      DATABASE_URL: postgresql+psycopg://ums:ums@db:5432/user_mgmt
       JWT_SECRET: dev-only-change-me-32bytes-min!!
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
-      SMTP_FROM: noreply@prior-auth.local
+      SMTP_FROM: noreply@user-mgmt.local
       OUTBOX_POLL_SECONDS: "2"
       OUTBOX_BATCH_SIZE: "20"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
-      OTEL_SERVICE_NAME: prior-auth-outbox-worker
+      OTEL_SERVICE_NAME: user-management-outbox-worker
     depends_on:
       db:
         condition: service_healthy

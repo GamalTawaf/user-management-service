@@ -1,13 +1,13 @@
 import uuid
 from dataclasses import dataclass
 
-from app.identity.models import UserRole
+from app.identity.models import UserRole, UserStatus
 
 
 @dataclass(frozen=True)
 class UserContext:
     user_id: uuid.UUID
     role: UserRole
-    practice_id: uuid.UUID | None = None
-    member_id: uuid.UUID | None = None
+    status: UserStatus
+    org_id: uuid.UUID | None = None
     email: str = ""

@@ -1,7 +1,5 @@
 #!/bin/sh
 # Bring schema to head before serving. Seed remains a separate explicit step.
-# Retry DB connect: Compose can mark Postgres healthy before Docker DNS
-# registers the service hostname inside the API container.
 set -eu
 
 python - <<'PY'
@@ -13,7 +11,7 @@ from sqlalchemy import create_engine, text
 
 url = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://prior:prior@db:5432/prior_auth",
+    "postgresql+psycopg://ums:ums@db:5432/user_mgmt",
 )
 engine = create_engine(url, pool_pre_ping=True)
 deadline = time.monotonic() + 60

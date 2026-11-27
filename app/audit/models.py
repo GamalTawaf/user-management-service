@@ -9,18 +9,15 @@ from app.db import Base
 
 
 class AuditEvent(Base):
-    """Append-only who/when/what for submits, claims, decisions, and intake failures."""
+    """Append-only who/when/what for user lifecycle changes."""
 
     __tablename__ = "audit_events"
 
     uuid: Mapped[uuid_lib.UUID] = mapped_column(
         "id", UUID(as_uuid=True), primary_key=True, default=uuid_lib.uuid4
     )
-    request_id: Mapped[uuid_lib.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("prior_auth_requests.id"), nullable=True, index=True
-    )
-    intake_rejection_id: Mapped[uuid_lib.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("intake_rejections.id"), nullable=True
+    subject_user_id: Mapped[uuid_lib.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
     )
     actor_user_id: Mapped[uuid_lib.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Parallel mutmut: each child claims an exclusive prior_auth_mutmut_{i} DB so
-# DROP SCHEMA test_prior_auth in pytest sessions does not race.
+# Parallel mutmut: each child claims an exclusive user_mgmt_mutmut_{i} DB so
+# DROP SCHEMA test_user_mgmt in pytest sessions does not race.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -20,7 +20,7 @@ if [[ "${MUTMUT_KEEP_CACHE:-0}" != "1" ]]; then
   rm -rf mutants
 fi
 
-echo "=== ensure mutmut DBs (prior_auth_mutmut_0..$((MUTMUT_MAX_CHILDREN - 1))) ==="
+echo "=== ensure mutmut DBs (user_mgmt_mutmut_0..$((MUTMUT_MAX_CHILDREN - 1))) ==="
 uv run python scripts/ensure_mutmut_dbs.py "$MUTMUT_MAX_CHILDREN"
 
 echo "=== mutmut (max-children=${MUTMUT_MAX_CHILDREN}) ==="

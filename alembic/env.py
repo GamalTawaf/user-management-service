@@ -7,17 +7,9 @@ from app.audit.models import AuditEvent  # noqa: F401
 from app.config import settings
 from app.db import APP_SCHEMA, Base
 from app.identity.models import User  # noqa: F401
-from app.intake.models import IntakeRejection  # noqa: F401
-from app.master_data.models import (  # noqa: F401
-    Coverage,
-    Member,
-    PatientPracticeLink,
-    Practice,
-    ReviewerMemberConflict,
-)
+from app.orgs.models import Organization  # noqa: F401
 from app.outbox.models import OutboxEvent  # noqa: F401
-from app.prior_auth.idempotency import IdempotencyRecord  # noqa: F401
-from app.prior_auth.models import PriorAuthProcedure, PriorAuthRequest  # noqa: F401
+from app.users.idempotency import IdempotencyRecord  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

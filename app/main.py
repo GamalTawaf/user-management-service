@@ -3,9 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 
-from app.audit.router import router as audit_router
-from app.intake.router import router as intake_router
-from app.prior_auth.router import router as prior_auth_router
 from app.shared.errors import (
     BadRequestError,
     ConflictError,
@@ -22,6 +19,7 @@ from app.shared.errors import (
 )
 from app.shared.middleware import TRACE_ID_HEADER, LimitRequestBodyMiddleware, TraceIdMiddleware
 from app.telemetry import setup_telemetry
+from app.users.router import router as users_router
 
 _TRACE_ID_OPENAPI = {
     TRACE_ID_HEADER: {
@@ -41,21 +39,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Prior Authorization API",
+    title="User Management API",
     version="0.1.0",
     lifespan=lifespan,
     description=(
-        "Partner-facing prior authorization API. "
-        "People: members (patients), provider offices (doctors' offices), "
-        "reviewers (nurses or physicians), operations admins, auditors. "
-        "JSON/API field names stay technical (`member_id`, role enums); "
-        "office emails use plain language. Primary keys are named `uuid`. "
+        "User management API: organizations, accounts, roles, lifecycle "
+        "(invited → active → disabled), audit trail, and transactional email outbox. "
         "Errors use `error_code`, `field`, `message`, and optional `correlation_id`. "
-        f"Every response includes `{TRACE_ID_HEADER}` (send the same header to correlate retries)."
+        f"Every response includes `{TRACE_ID_HEADER}`."
     ),
 )
 
-# TraceId outermost so early LimitRequestBody 413s still get the header.
 app.add_middleware(LimitRequestBodyMiddleware)
 app.add_middleware(TraceIdMiddleware)
 app.add_exception_handler(ValidationFailure, validation_failure_handler)
@@ -66,9 +60,7 @@ app.add_exception_handler(NotFoundError, not_found_handler)
 app.add_exception_handler(ForbiddenError, forbidden_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
-app.include_router(prior_auth_router)
-app.include_router(intake_router)
-app.include_router(audit_router)
+app.include_router(users_router)
 
 
 @app.get("/v1/health", tags=["health"])
@@ -95,8 +87,9 @@ def _annotate_openapi_trace_headers(schema: dict) -> None:
 def _build_openapi() -> dict:
     from fastapi.openapi.utils import get_openapi
 
-    if app.openapi_schema is not None:
-        return app.openapi_schema
+    cached = app.openapi_schema
+    if cached is not None:
+        return cached
     schema = get_openapi(
         title=app.title,
         version=app.version,

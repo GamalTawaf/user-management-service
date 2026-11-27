@@ -1,7 +1,7 @@
 [project]
-name = "prior-auth-api"
+name = "user-management-api"
 version = "0.1.0"
-description = "Prior Authorization API — portfolio (Oxbridge Health challenge)"
+description = "User Management API — portfolio service (FastAPI + PostgreSQL)"
 readme = "README.md"
 requires-python = ">=3.15"
 dependencies = [
@@ -47,18 +47,18 @@ src = ["app", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
-    "B",   # bugbear
-    "SIM", # simplify
-    "C4",  # comprehensions
-    "RUF", # ruff-specific
+    "E",
+    "W",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+    "C4",
+    "RUF",
 ]
 ignore = [
-    "E501", # line length handled by formatter
+    "E501",
 ]
 
 [tool.ruff.format]

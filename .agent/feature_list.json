@@ -1,112 +1,11 @@
 {
   "features": [
     {
-      "id": "feat-001",
-      "name": "Decisions + local skeleton",
-      "description": "README Decisions (matrices + glossary). uv on Python 3.15 + Postgres 19; prod vs [dependency-groups] dev; Docker --no-dev. Scaffold app/ with domain packages (shared, identity, master_data, prior_auth, intake, audit), /v1/health, thin OTel, python:3.15.2-slim, postgres:19. No remote repo required.",
-      "dependencies": [],
+      "id": "ums-001",
+      "name": "User management domain",
+      "description": "Orgs + users with admin/member/auditor roles; invited/active/disabled lifecycle; /me; audit; outbox welcome/status; Idempotency-Key on create; stats.",
       "status": "done",
-      "evidence": "uv run pytest tests/test_health.py -v → 2/2; docker compose up --build; curl /v1/health ok; image lacks pytest",
-      "verify": "docker compose up --build -d && curl -sf localhost:8000/v1/health && docker compose down"
-    },
-    {
-      "id": "feat-002",
-      "name": "Schema, migrations, seed, JWT",
-      "description": "SQLAlchemy models (including IntakeRejection, AuditEvent, COI), Alembic with decided⇒decided_by CHECK, seed script with COI pair, PyJWT auth + RBAC deps, seed tokens documented in README.",
-      "dependencies": ["feat-001"],
-      "status": "done",
-      "evidence": "alembic upgrade head; ck_decided_requires_actor present; scripts/seed.py prints role JWTs (office/reviewer/reviewer_coi/admin/auditor/member); tests/test_auth.py pass",
-      "verify": "uv run alembic upgrade head && uv run python scripts/seed.py"
-    },
-    {
-      "id": "feat-003",
-      "name": "Submit + intake rejection + office read",
-      "description": "POST /v1/prior-auths with full validation (linked patient, DOS window, coverage, units>30 hard reject, multi-field errors). Persist IntakeRejection + correlation_id on failure. Office list/get practice-scoped. Audit in same transaction.",
-      "dependencies": ["feat-002"],
-      "status": "done",
-      "evidence": "uv run pytest tests/test_submit.py tests/test_intake_support.py -v PASS",
-      "verify": "uv run pytest tests/test_submit.py tests/test_intake_support.py -v"
-    },
-    {
-      "id": "feat-004",
-      "name": "Queue, claim, COI, decide, reassign",
-      "description": "Review queue, atomic claim race, COI 403, whole-request decide with per-procedure outcomes, admin reassign, decided terminal + DB invariant. Audit on claim/reassign/decide.",
-      "dependencies": ["feat-003"],
-      "status": "done",
-      "evidence": "pytest claim/coi/decide/db_invariants PASS; concurrent claim exactly one wins",
-      "verify": "uv run pytest tests/test_claim_concurrency.py tests/test_coi.py tests/test_decide.py tests/test_db_invariants.py -v"
-    },
-    {
-      "id": "feat-005",
-      "name": "Member redaction + audit API",
-      "description": "Member /me endpoints strip clinical_note and denial_reason. Admin GET audit. OpenAPI error shape with error_code, field, message, correlation_id.",
-      "dependencies": ["feat-004"],
-      "status": "done",
-      "evidence": "tests/test_member_redaction.py PASS; demo member redaction OK",
-      "verify": "uv run pytest tests/test_member_redaction.py -v"
-    },
-    {
-      "id": "feat-006",
-      "name": "CI + mutmut + demo + Postman generator",
-      "description": "GitHub Actions: pytest, mutmut on app/services, docker build with no push. scripts/demo.sh for live walkthrough. scripts/generate_postman_collection.py builds Postman Collection v2.1 + environment from FastAPI OpenAPI (all /v1 routes, Bearer {{token}}, seeded role tokens). Commit postman/*.json. README: how-to-run, AI usage, CI notes, Postman import.",
-      "dependencies": ["feat-005"],
-      "status": "done",
-      "evidence": "mutmut 535/535 killed; demo.sh complete; postman collection has submit/claim/decide/me/support; docker build ok",
-      "verify": "uv run pytest -q && docker build -t prior-auth-api:local . && test -f .github/workflows/ci.yml && test -x scripts/demo.sh && uv run python scripts/generate_postman_collection.py && test -f postman/Prior_Auth_API.postman_collection.json && test -f postman/Prior_Auth_API.postman_environment.json"
-    },
-    {
-      "id": "feat-007",
-      "name": "Live-session readiness",
-      "description": "No new features. Confirm whiteboard state machine, claim race demo, redaction demo, audit+intake support path, README AI section complete. Update session-handoff with walkthrough script.",
-      "dependencies": ["feat-006"],
-      "status": "done",
-      "evidence": "./scripts/demo.sh complete; README AI + decisions + walkthrough filled; coverage 100%",
-      "verify": "./scripts/demo.sh"
-    },
-    {
-      "id": "feat-008",
-      "name": "Reviewer workload API",
-      "description": "GET /v1/reviewers/workload (ops_admin): all reviewers with open_count = in_review claimed by them (LEFT JOIN, include zeros). Plan: docs/plans/2026-11-25-wishlist-outbox-maildev.md. Lane: medium.",
-      "dependencies": ["feat-007"],
-      "status": "done",
-      "evidence": "uv run pytest tests/test_workload.py -v → 8 passed; ./scripts/gates.sh green; GET /v1/reviewers/workload on prior_auth router",
-      "verify": "uv run pytest tests/test_workload.py -v"
-    },
-    {
-      "id": "feat-009",
-      "name": "Outbox + MailDev decision notify",
-      "description": "practices.notification_email; outbox_events; enqueue on decide same txn; outbox-worker SMTP via stdlib to MailDev; Compose maildev+worker; no clinical_note/denial_reason in email body. Plan: docs/plans/2026-11-25-wishlist-outbox-maildev.md. Lane: medium.",
-      "dependencies": ["feat-008"],
-      "status": "done",
-      "evidence": "uv run pytest tests/test_outbox.py -v → 12 passed; ./scripts/gates.sh green; alembic 20261125_outbox; Compose maildev+outbox-worker",
-      "verify": "uv run pytest tests/test_outbox.py -v && docker compose up -d maildev outbox-worker"
-    },
-    {
-      "id": "feat-010",
-      "name": "Auditor role",
-      "description": "UserRole.auditor; seed token; AdminOrAuditor on audit GET; optional read-all list/get; no mutations. Lane: high.",
-      "dependencies": ["feat-009"],
-      "status": "done",
-      "evidence": "uv run pytest tests/test_auditor.py -v → 3 passed; ./scripts/gates.sh green; alembic 20261125_auditor (down_revision 20261125_outbox)",
-      "verify": "uv run pytest tests/test_auditor.py -v"
-    },
-    {
-      "id": "feat-011",
-      "name": "Idempotency-Key on submit",
-      "description": "Idempotency-Key header on POST /v1/prior-auths only; unique (practice_id, key); same body replay 201; different body 409 idempotency_key_reuse; missing header = current behavior. Lane: high.",
-      "dependencies": ["feat-010"],
-      "status": "done",
-      "evidence": "uv run pytest tests/test_idempotency.py -v → 13 passed; ./scripts/gates.sh green; alembic 20261125_idempotency (down_revision 20261125_auditor)",
-      "verify": "uv run pytest tests/test_idempotency.py -v"
-    },
-    {
-      "id": "feat-012",
-      "name": "Wishlist docs + demo",
-      "description": "README Decisions: remove wishlist from cut list; document MailDev UI, workload, auditor, Idempotency-Key; extend demo.sh; session-handoff. Lane: low.",
-      "dependencies": ["feat-011"],
-      "status": "done",
-      "evidence": "README Decisions: cut list excludes wishlist; workload/MailDev/auditor/Idempotency-Key (~24h) documented; ./scripts/demo.sh complete (idempotency replay OK, second_claim=409, workload, coi=403, MailDev notice, auditor audit OK, member redaction OK); session-handoff walkthrough updated; ./scripts/gates.sh green",
-      "verify": "./scripts/demo.sh"
+      "verify": "uv run pytest -q && ./scripts/demo.sh"
     }
   ]
 }
