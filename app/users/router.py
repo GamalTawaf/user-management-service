@@ -31,9 +31,12 @@ from app.users.schemas import (
     UserStatsOut,
 )
 from app.users.serializers import to_org_out, to_user_out
-from app.users.services.common import apply_after_id, get_user
-from app.users.services.create import create_user
-from app.users.services.lifecycle import activate_user, disable_user, enable_user
+from app.users.services.common import apply_after_id
+from app.users.services.common import get_user as load_user
+from app.users.services.create import create_user as create_user_svc
+from app.users.services.lifecycle import activate_user as activate_user_svc
+from app.users.services.lifecycle import disable_user as disable_user_svc
+from app.users.services.lifecycle import enable_user as enable_user_svc
 from app.users.services.orgs import create_organization
 from app.users.services.update import patch_me, update_user
 
@@ -45,7 +48,7 @@ AfterId = Annotated[uuid.UUID | None, Query()]
 
 @router.get("/v1/me", response_model=UserOut)
 def me(db: DbSession, ctx: CurrentUser) -> UserOut:
-    user = get_user(db, ctx.user_id)
+    user = load_user(db, ctx.user_id)
     return to_user_out(user)
 
 
@@ -80,7 +83,7 @@ def list_users(
 
 
 @router.post("/v1/users", response_model=UserOut, status_code=201)
-def create_user_route(
+def create_user(
     body: CreateUserIn,
     db: DbSession,
     ctx: AdminUser,
@@ -98,7 +101,7 @@ def create_user_route(
         if existing is not None:
             return resolve_existing(existing, request_hash)
     try:
-        user = create_user(
+        user = create_user_svc(
             db,
             ctx,
             body,
@@ -118,8 +121,8 @@ def create_user_route(
 
 
 @router.get("/v1/users/{user_id}", response_model=UserOut)
-def get_user_route(user_id: uuid.UUID, db: DbSession, ctx: CurrentUser) -> UserOut:
-    user = get_user(db, user_id)
+def get_user(user_id: uuid.UUID, db: DbSession, ctx: CurrentUser) -> UserOut:
+    user = load_user(db, user_id)
     is_self = ctx.user_id == user_id
     is_staff = ctx.role in (UserRole.admin, UserRole.auditor)
     if not (is_self or is_staff):
@@ -134,26 +137,26 @@ def patch_user(user_id: uuid.UUID, body: UpdateUserIn, db: DbSession, ctx: Admin
 
 
 @router.post("/v1/users/{user_id}/disable", response_model=UserOut)
-def disable_route(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
-    user = disable_user(db, ctx, user_id)
+def disable_user(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
+    user = disable_user_svc(db, ctx, user_id)
     return to_user_out(user)
 
 
 @router.post("/v1/users/{user_id}/enable", response_model=UserOut)
-def enable_route(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
-    user = enable_user(db, ctx, user_id)
+def enable_user(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
+    user = enable_user_svc(db, ctx, user_id)
     return to_user_out(user)
 
 
 @router.post("/v1/users/{user_id}/activate", response_model=UserOut)
-def activate_route(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
-    user = activate_user(db, ctx, user_id)
+def activate_user(user_id: uuid.UUID, db: DbSession, ctx: AdminUser) -> UserOut:
+    user = activate_user_svc(db, ctx, user_id)
     return to_user_out(user)
 
 
 @router.get("/v1/users/{user_id}/audit", response_model=list[AuditEventOut])
 def user_audit(user_id: uuid.UUID, db: DbSession, _ctx: AdminOrAuditor) -> list[AuditEventOut]:
-    get_user(db, user_id)
+    load_user(db, user_id)
     oldest_first = AuditEvent.at.asc()
     stmt = select(AuditEvent).where(AuditEvent.subject_user_id == user_id).order_by(oldest_first)
     rows = db.scalars(stmt).all()
