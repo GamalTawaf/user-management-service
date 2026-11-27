@@ -1,8 +1,6 @@
 # User Management API
 
-Portfolio project: a durable Python + PostgreSQL **user management** service.
-
-Built on the same engineering foundation as an Oxbridge Health take-home (JWT/RBAC, audit-in-transaction, outbox→MailDev, idempotency, OTel, 100% coverage gates) — rewritten to a clean user/org domain so the scaffolding is public without prior-auth product code.
+Portfolio project: a durable Python + PostgreSQL **user management** service with JWT/RBAC, audit-in-transaction, outbox→MailDev, idempotency, OTel, and 100% coverage gates.
 
 For full info (Decisions, CI, AI usage), use [`README_FULL.md`](README_FULL.md).
 
