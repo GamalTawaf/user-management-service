@@ -1,9 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.config import Settings, settings
+from fastapi.testclient import TestClient
 
 
 def test_health(client: TestClient):
