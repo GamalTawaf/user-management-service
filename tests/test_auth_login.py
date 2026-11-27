@@ -1,9 +1,9 @@
 import uuid
 
+from app.identity.models import User
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.identity.models import User
 from tests.conftest import SEED_PASSWORD, assert_detail, auth
 
 
