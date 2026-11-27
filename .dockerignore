@@ -1,0 +1,17 @@
+.venv
+.git
+.superpowers
+.pytest_cache
+.ruff_cache
+.mutmut-cache
+.coverage
+htmlcov
+__pycache__
+*.pyc
+.mypy_cache
+docs
+harness
+tests
+postman
+*.md
+!README.md

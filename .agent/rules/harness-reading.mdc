@@ -1,0 +1,24 @@
+---
+description: Harness/docs cleanup reduces reading load; keep operational agent tooling
+globs: AGENTS.md,docs/plans/**,README.md,README_FULL.md,.agent/**
+alwaysApply: false
+---
+
+# Harness & docs reading load
+
+## Intent
+
+Cleanup means **less unnecessary reading** for the next agent/session — not deleting operational tooling.
+
+## Do
+
+- Prefer `.agent/session-handoff.md` + `README_FULL.md` Decisions over re-reading full historical plans.
+- Keep plans marked **SHIPPED** / historical; do not re-implement done features.
+- Keep **grit** + `./scripts/grit_reindex.sh` and short parallel-agent rules in `AGENTS.md` / handoff.
+- Keep `feature_list.json` as inventory + evidence (all done is fine).
+
+## Don't
+
+- Delete grit/reindex, gates scripts, or mutmut wrappers as “theater.”
+- Re-inflate `progress.md` with multi-page session diaries.
+- Frame the repo as “pick the next unfinished feature” when the system is complete (unless the user opens new scope).

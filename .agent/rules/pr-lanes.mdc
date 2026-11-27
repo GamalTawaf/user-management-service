@@ -1,0 +1,43 @@
+---
+description: PR risk lanes (low / medium / high) — required label on every PR
+alwaysApply: true
+---
+
+# PR lanes (required)
+
+**Never commit or push directly to `main`.** Branch from latest `main`, push the branch, open a PR (`gh pr create --base main`), merge via GitHub. Docs/`.agent`/code and hotfixes are not exempt.
+
+Every PR **must** be classified into exactly one lane and labeled on GitHub: `low`, `medium`, or `high`.
+
+## Lane definitions
+
+| Lane | Label | What belongs here |
+|------|-------|-------------------|
+| **Low** | `low` | No system behavior change: docs (`*.md`), `.agent/`, plans, comments, formatting-only, lockfile/tooling config with no runtime effect (`pyproject.toml` / `uv.lock` / CI YAML that only renames steps, Postman regen with same contract). |
+| **Medium** | `medium` | Observable contract change that is **backward compatible**: additive response/schema fields, new optional request fields with defaults, new non-breaking endpoints, additive OpenAPI. Existing clients keep working. |
+| **High** | `high` | Behavior or logic change in main components: validation rules, status machine, claim/decide/reassign/COI/RBAC, auth, DB constraints/migrations that affect semantics, removed/renamed fields, status code changes, error_code changes, anything that can break callers or alter who wins a race. |
+
+## Classification rules
+
+1. Inspect the **full** PR diff (all commits), not just the title.
+2. If the PR mixes lanes, pick the **highest** lane present (high > medium > low).
+3. Tests-only that lock existing behavior → **low**. Tests that encode a new behavior shipped in the same PR → follow the production change’s lane.
+4. Refactors that preserve behavior byte-for-byte (same responses/errors) → **low**; if unsure whether behavior changed → **high**.
+5. State the lane in the PR body (Summary) and pass `--label <lane>` to `gh pr create` / `gh pr edit`.
+
+## One change → one PR
+
+- Split independent fixes/features into **separate PRs** (lane-homogeneous when possible).
+- Dependent sequential landings → **GitHub stacked PRs** via `gh stack` (skill `.agent/skills/stacked-prs`). Do not hand-rebase the stack after each merge — GitHub owns bases/linking.
+- Do not bundle unrelated medium/high behavior into one mega-PR.
+
+## Opening a PR (agents)
+
+1. `unset GITHUB_TOKEN` if `gh` returns **401 Bad credentials** (stale env token overrides keyring).
+2. Ensure labels exist: `./scripts/ensure_pr_labels.sh` (idempotent).
+3. Classify → one of `low` | `medium` | `high`.
+4. `gh pr create ... --base main --label <lane>` (or `gh pr edit <n> --add-label <lane>`).
+5. PR title/body must name the lane (e.g. first Summary bullet: `Lane: high`).
+6. Keep the PR description current when new commits change intent (e.g. restored tooling).
+
+Load skill `.agent/skills/open-pr` when creating or updating PRs.

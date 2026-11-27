@@ -1,0 +1,22 @@
+---
+description: Never run bare mutmut; use scripts/run_mutmut.sh
+globs: setup.cfg,mutmut_config.py,scripts/run_mutmut.sh,scripts/ensure_mutmut_dbs.py,.github/workflows/mutate.yml
+alwaysApply: false
+---
+
+# Mutmut
+
+## Do
+
+- Run mutation testing only via `./scripts/run_mutmut.sh` (creates per-child DBs, sets workers, clears stale `mutants/` unless `MUTMUT_KEEP_CACHE=1`).
+- Scope stays `only_mutate=app/prior_auth/services/*` with `source_paths=app/` (see `setup.cfg`).
+
+## Don't
+
+- Run bare `uv run mutmut run` — stale cache / 0 files mutated / schema races.
+
+## Verify
+
+```bash
+./scripts/run_mutmut.sh
+```

@@ -1,0 +1,22 @@
+name: image
+
+on:
+  workflow_call:
+    inputs:
+      code:
+        description: Run docker build when true; otherwise succeed as a meta-only no-op
+        type: boolean
+        required: true
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip (meta-only change)
+        if: ${{ !inputs.code }}
+        run: echo "Skipping image — no code paths changed"
+      - uses: actions/checkout@v7
+        if: ${{ inputs.code }}
+      - name: docker build (no push)
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "docker build" --tail 30 -- docker build -t prior-auth-api:ci .

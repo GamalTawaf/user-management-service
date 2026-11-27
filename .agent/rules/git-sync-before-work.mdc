@@ -1,0 +1,25 @@
+---
+description: Sync with origin/main before starting work; never assume local tip is current
+alwaysApply: true
+---
+
+# Git sync before work
+
+## Do
+
+- Before edits or a new branch: `git fetch origin` and compare `HEAD` to `origin/main`.
+- Start feature branches from **latest** `origin/main` (`git checkout -b <branch> origin/main`).
+- If the user says `main` is source of truth, switch/pull `main` first, then re-apply or rebase local work.
+- After a PR merges: `git checkout main && git pull origin main` before the next change.
+
+## Don't
+
+- Edit on a stale feature branch that is behind `origin/main` without fetching first.
+- Assume uncommitted work on an old branch is based on tip without checking ahead/behind.
+
+## Verify
+
+```bash
+git fetch origin
+git rev-list --left-right --count HEAD...origin/main
+```

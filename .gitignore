@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.mutmut-cache/
+mutants/
+dist/
+*.egg-info/
+.DS_Store
+.env
+.superpowers/
+.worktrees/
+worktrees/
+# Postman desktop sync dumps; keep generated Prior_Auth_API*.json tracked for docs links
+.postman/
+postman/*
+!postman/Prior_Auth_API.postman_collection.json
+!postman/Prior_Auth_API.postman_environment.json
+
+.grit

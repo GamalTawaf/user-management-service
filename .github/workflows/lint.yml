@@ -1,0 +1,36 @@
+name: lint
+
+on:
+  workflow_call:
+    inputs:
+      code:
+        description: Run lint steps when true; otherwise succeed as a meta-only no-op
+        type: boolean
+        required: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip (meta-only change)
+        if: ${{ !inputs.code }}
+        run: echo "Skipping lint — no code paths changed"
+      - uses: actions/checkout@v7
+        if: ${{ inputs.code }}
+      - uses: ./.github/actions/setup-project
+        if: ${{ inputs.code }}
+      - name: ruff format
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "ruff format" -- uv run ruff format --check app tests scripts
+      - name: ruff lint
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "ruff lint" -- uv run ruff check app tests scripts
+      - name: call style
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "call style" -- uv run python scripts/check_call_style.py
+      - name: fastapi compile + OpenAPI
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "fastapi compile" -- uv run python scripts/check_fastapi_compile.py
+      - name: postman collection fresh
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "postman fresh" -- uv run python scripts/check_postman_collection.py

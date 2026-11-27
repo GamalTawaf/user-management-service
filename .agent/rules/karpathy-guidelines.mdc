@@ -1,0 +1,11 @@
+---
+description: Karpathy behavioral guidelines
+alwaysApply: true
+---
+
+# Karpathy guidelines
+
+1. Think before coding — state assumptions; surface tradeoffs; ask when unclear.
+2. Simplicity first — no speculative features/abstractions/config.
+3. Surgical changes — touch only what the task needs.
+4. Goal-driven execution — every step has a verify check; prefer red→green.

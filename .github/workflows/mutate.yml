@@ -1,0 +1,46 @@
+name: mutate
+
+on:
+  workflow_call:
+    inputs:
+      code:
+        description: Run mutmut when true; otherwise succeed as a meta-only no-op
+        type: boolean
+        required: true
+
+env:
+  DATABASE_URL: postgresql+psycopg://prior:prior@localhost:5432/prior_auth
+  JWT_SECRET: ci-secret-32-bytes-minimum-key!!
+
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:19
+        env:
+          POSTGRES_USER: prior
+          POSTGRES_PASSWORD: prior
+          POSTGRES_DB: prior_auth
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U prior -d prior_auth"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - name: skip (meta-only change)
+        if: ${{ !inputs.code }}
+        run: echo "Skipping mutate — no code paths changed"
+      - uses: actions/checkout@v7
+        if: ${{ inputs.code }}
+      - uses: ./.github/actions/setup-project
+        if: ${{ inputs.code }}
+      - name: alembic migrate
+        if: ${{ inputs.code }}
+        run: ./scripts/ci_run.sh "alembic upgrade head" -- uv run alembic upgrade head
+      - name: mutmut prior_auth services
+        if: ${{ inputs.code }}
+        env:
+          MUTMUT_MAX_SURVIVORS: "0"
+        run: ./scripts/ci_run.sh "mutmut" --tail 40 -- ./scripts/run_mutmut.sh

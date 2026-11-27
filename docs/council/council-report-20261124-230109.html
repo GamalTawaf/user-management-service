@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Council Report — Prior Auth API Plan</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --card: #fff;
+    --ink: #1a1a1a;
+    --muted: #5c5c5c;
+    --line: #e5e5e5;
+    --accent: #0b5fff;
+    --agree: #0d7a4f;
+    --clash: #b45309;
+    --blind: #7c3aed;
+    --rec: #0b5fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .question {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 28px;
+  }
+  .question h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; }
+  .question p { margin: 0; font-size: 1.05rem; }
+  .verdict {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .verdict h2 { margin: 0 0 16px; font-size: 1.25rem; color: var(--accent); }
+  .verdict h3 { font-size: 0.95rem; margin: 20px 0 8px; }
+  .verdict h3.agree { color: var(--agree); }
+  .verdict h3.clash { color: var(--clash); }
+  .verdict h3.blind { color: var(--blind); }
+  .verdict h3.rec { color: var(--rec); }
+  .verdict ul { margin: 0; padding-left: 1.2rem; }
+  .verdict li { margin-bottom: 6px; }
+  .one-thing {
+    background: #eef4ff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    font-weight: 560;
+  }
+  .grid-title { font-size: 1.1rem; margin: 0 0 12px; }
+  .align-grid {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(5, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    font-size: 0.78rem;
+  }
+  .align-grid > div { background: var(--card); padding: 10px 8px; }
+  .align-grid .head { font-weight: 600; background: #f3f4f6; text-align: center; }
+  .align-grid .row-label { font-weight: 560; }
+  .dot {
+    display: inline-block;
+    width: 10px; height: 10px; border-radius: 50%;
+    margin: 0 auto;
+  }
+  .yes { background: var(--agree); }
+  .no { background: #d1d5db; }
+  .mix { background: var(--clash); }
+  .center { text-align: center; }
+  details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 0 16px;
+  }
+  summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-weight: 600;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; color: var(--muted); }
+  details[open] summary::before { content: "▾ "; }
+  .advisor-body { padding: 0 0 16px; color: #333; font-size: 0.95rem; white-space: pre-wrap; }
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .tag-c { background: #fee2e2; color: #991b1b; }
+  .tag-f { background: #e0e7ff; color: #3730a3; }
+  .tag-e { background: #d1fae5; color: #065f46; }
+  .tag-o { background: #fef3c7; color: #92400e; }
+  .tag-x { background: #f3e8ff; color: #6b21a8; }
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Council Report</h1>
+  <p class="meta">Prior Authorization API — Project Plan · 2026-11-25 · 5 advisors + peer review + chairman</p>
+
+  <section class="question">
+    <h2>The question</h2>
+    <p>Pressure-test this senior take-home plan ($180–200K prior-auth API): where will it fail the submission or 45-minute walkthrough, and what should change before coding?</p>
+  </section>
+
+  <section class="verdict">
+    <h2>Chairman’s verdict</h2>
+
+    <h3 class="agree">Where the council agrees</h3>
+    <ul>
+      <li>Boring stack is fine — FastAPI / Postgres / Alembic / JWT / Compose. Don’t re-litigate tools.</li>
+      <li>Highest risk: thin <code>submitted | in_review | decided</code> without explicit claim, finalize, and actor invariants.</li>
+      <li>Failed intake must be a queryable Support artifact, not only a 422 response body.</li>
+      <li>Cut outbox / wishlist until MVP is solid; Idempotency-Key is commit-or-defer, not half-optional.</li>
+      <li>Before code: state machine + audit matrix + visibility matrix; concurrent claim is non-negotiable.</li>
+      <li>Live session needs a 5-command demo a stranger can run from the README.</li>
+    </ul>
+
+    <h3 class="clash">Where the council clashes</h3>
+    <ul>
+      <li><strong>Expansion vs cut:</strong> keep Idempotency-Key / actor-shaped OpenAPI / outbox seam as senior signal vs treat them as resume padding. Chairman sides with cut/defer until MVP rules are green.</li>
+      <li><strong>Repo blocker:</strong> Executor wants private repo first; Contrarian says start locally now. Both right: code locally today; private template before push/submit.</li>
+      <li><strong>units &gt; 30:</strong> hard reject is fine if README defends “almost always typo → hard reject for MVP clarity” in one sentence.</li>
+    </ul>
+
+    <h3 class="blind">Blind spots the council caught</h3>
+    <ul>
+      <li>DB constraints must enforce decided ⇒ actor and atomic claim — pytest alone is not enough.</li>
+      <li>Audit payloads can become a PHI leak path if member serializers aren’t designed against them.</li>
+      <li>Need an hour budget / fail-closed list when time runs short.</li>
+      <li>README glossary is the async grader; jargon without definitions fails inheritance.</li>
+      <li>Fake JWT auth threat model (role escalation / forged claims) is under-specified.</li>
+    </ul>
+
+    <h3 class="rec">The recommendation</h3>
+    <p>Keep the MVP spine and stack. Reorder the plan around three pre-code artifacts: (1) transition graph with claim + whole-request finalize + actor invariants, (2) durable failed-intake records for Support, (3) per-role visibility/redaction matrix. Cut outbox/wishlist; defer Idempotency-Key. Prefer one resource API + RBAC over router-per-actor theater. Collapse six phases into three vertical slices. Encode invariants in schema and write audit in the same transaction as state changes.</p>
+
+    <div class="one-thing">
+      One thing to do first: Write a one-page state machine + audit matrix + visibility matrix (including Support lookup by correlation id) into README Decisions — then scaffold only against that page.
+    </div>
+  </section>
+
+  <h2 class="grid-title">Advisor alignment</h2>
+  <div class="align-grid">
+    <div class="head">Topic</div>
+    <div class="head">Contrarian</div>
+    <div class="head">First Princ.</div>
+    <div class="head">Expansionist</div>
+    <div class="head">Outsider</div>
+    <div class="head">Executor</div>
+
+    <div class="row-label">Cut outbox / wishlist</div>
+    <div class="center"><span class="dot yes" title="yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot no" title="keep/wire"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+
+    <div class="row-label">Defer Idempotency-Key</div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot no" title="keep"></span></div>
+    <div class="center"><span class="dot mix" title="commit or cut"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+
+    <div class="row-label">Status model too thin</div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot no"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+
+    <div class="row-label">Durable failed intake</div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot mix" title="API contract first"></span></div>
+
+    <div class="row-label">Simplify routers / phases</div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot no" title="actor OpenAPI"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+
+    <div class="row-label">Pre-code matrices / glossary</div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot mix"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+    <div class="center"><span class="dot yes"></span></div>
+  </div>
+  <p class="meta" style="margin-top:-20px;margin-bottom:28px;">Green = agrees · Amber = nuanced · Gray = disagrees / didn’t prioritize</p>
+
+  <h2 class="grid-title">Advisor responses</h2>
+
+  <details>
+    <summary>The Contrarian <span class="tag tag-c">downside</span></summary>
+    <div class="advisor-body">Architecture theater over inheritance. Cut Idempotency-Key and outbox until required by the brief. Thin status enum collapses claim/decide/finalize — fatal under interrogation. Failed intake with no durable row fails Support. Hard units&gt;30 needs a one-sentence defense. Add sequence diagram, redaction matrix, Support path, concurrent-claim as non-negotiable.</div>
+  </details>
+
+  <details>
+    <summary>The First Principles Thinker <span class="tag tag-f">strongest</span></summary>
+    <div class="advisor-body">Real bar: can a stranger defend a durable prior-auth state machine under audit in 45 minutes? Four truths only: request transitions + actor, append-only why, hard redaction boundary, findable failed intake. Folders/outbox/idempotency are costume. Before coding: one-page state machine + audit matrix + visibility matrix. Cut any phase that doesn’t force one of those three true.</div>
+  </details>
+
+  <details>
+    <summary>The Expansionist <span class="tag tag-e">upside</span></summary>
+    <div class="advisor-body">Win = inheritance theater done right. Make audit + partner OpenAPI the hero path. First-class Support failed-submissions, typed errors, claim race + COI as live demo spine, actor-shaped contracts, keep Idempotency-Key, wire outbox stub and auditor seam for cheap polish. Cut anything that doesn’t narrate durability for teammate / partner / compliance.</div>
+  </details>
+
+  <details>
+    <summary>The Outsider <span class="tag tag-o">fresh eyes</span></summary>
+    <div class="advisor-body">Plan assumes prior-auth fluency. IntakeRejection vs request and status names aren’t obvious — if Support lookup lives only in your head, you look junior. Cut wishlist/outbox; commit-or-cut Idempotency-Key; prefer one resource API + RBAC. Add glossary, curl-demonstrable seed story, English audit-per-step, 5-command live script.</div>
+  </details>
+
+  <details>
+    <summary>The Executor <span class="tag tag-x">monday</span></summary>
+    <div class="advisor-body">Plan is shippable. Private repo needed to submit; code can start locally now. Draw the transition table; claim with UPDATE … WHERE claimed_by IS NULL; cut outbox; three merges not six phases; one router package. Monday: compose + Alembic + OpenAPI stub + red test for units&gt;30 + clock.py for America/New_York. Anything not demoable from README in 45 minutes is overbuild.</div>
+  </details>
+
+  <details>
+    <summary>Peer review highlights</summary>
+    <div class="advisor-body">4/5 reviewers picked First Principles (D) as strongest. 4/5 flagged Expansionist (A) as biggest blind spot (keeps padding, skips thin status). Shared misses across all advisors: DB-enforced invariants, hour budget / fail-closed list, PHI in audit payloads, fake-JWT threat model, README as async grader.</div>
+  </details>
+
+  <footer>
+    Counciled: Prior Authorization API Project Plan · Oxbridge Health take-home · Methodology adapted from Karpathy’s LLM Council · Transcript: council-transcript-20261124-230109.md
+  </footer>
+</div>
+</body>
+</html>
