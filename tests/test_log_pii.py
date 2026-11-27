@@ -68,6 +68,21 @@ def test_filter_non_string_msg_and_empty_args():
     assert record.msg == 42
 
 
+def test_filter_getmessage_failure_falls_back():
+    record = logging.LogRecord(
+        name="test.pii",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="password=%d",
+        args=("not-an-int",),
+        exc_info=None,
+    )
+    assert PiiRedactingFilter().filter(record) is True
+    assert "not-an-int" not in record.msg
+    assert REDACTED in record.msg
+
+
 def test_redact_value_passthrough_and_containers():
     assert _redact_value(7) == 7
     assert _redact_value(("a@b.co",)) == (REDACTED,)
