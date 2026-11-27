@@ -8,6 +8,7 @@ import uuid
 from app.db import SessionLocal
 from app.identity.auth import mint_token
 from app.identity.models import User, UserRole, UserStatus
+from app.identity.passwords import hash_password
 from app.orgs.models import Organization
 from sqlalchemy import select
 
@@ -16,6 +17,7 @@ ADMIN_ID = uuid.UUID("55555555-5555-5555-5555-555555555555")
 MEMBER_ID = uuid.UUID("66666666-6666-6666-6666-666666666666")
 AUDITOR_ID = uuid.UUID("77777777-7777-7777-7777-777777777777")
 INVITED_ID = uuid.UUID("88888888-8888-8888-8888-888888888888")
+SEED_PASSWORD = "password12345"
 
 
 def seed() -> dict[str, str]:
@@ -34,6 +36,7 @@ def seed() -> dict[str, str]:
             )
             db.add(org)
             db.flush()
+            password_hash = hash_password(SEED_PASSWORD)
             admin = User(
                 uuid=ADMIN_ID,
                 email="admin@example.com",
@@ -41,6 +44,7 @@ def seed() -> dict[str, str]:
                 role=UserRole.admin,
                 status=UserStatus.active,
                 org_id=ORG_ID,
+                password_hash=password_hash,
             )
             member = User(
                 uuid=MEMBER_ID,
@@ -49,6 +53,7 @@ def seed() -> dict[str, str]:
                 role=UserRole.member,
                 status=UserStatus.active,
                 org_id=ORG_ID,
+                password_hash=password_hash,
             )
             auditor = User(
                 uuid=AUDITOR_ID,
@@ -56,6 +61,7 @@ def seed() -> dict[str, str]:
                 display_name="Audit Viewer",
                 role=UserRole.auditor,
                 status=UserStatus.active,
+                password_hash=password_hash,
             )
             invited = User(
                 uuid=INVITED_ID,
@@ -83,6 +89,7 @@ def main() -> None:
     print(f"member_id={MEMBER_ID}")
     print(f"auditor_id={AUDITOR_ID}")
     print(f"invited_id={INVITED_ID}")
+    print(f"seed_password={SEED_PASSWORD}")
 
 
 if __name__ == "__main__":

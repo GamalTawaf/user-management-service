@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.audit.service import write_audit
 from app.clock import utc_now
 from app.identity.models import User, UserRole, UserStatus
+from app.identity.passwords import hash_password
 from app.identity.schemas import UserContext
 from app.orgs.models import Organization
 from app.outbox.service import enqueue_status_notice, enqueue_user_welcome
@@ -114,12 +115,16 @@ def create_user(
 
     role = UserRole(body.role)
     status = UserStatus(body.status)
+    password_hash = None
+    if body.password is not None:
+        password_hash = hash_password(body.password)
     user = User(
         email=email,
         display_name=display_name,
         role=role,
         status=status,
         org_id=body.org_id,
+        password_hash=password_hash,
     )
     db.add(user)
     db.flush()

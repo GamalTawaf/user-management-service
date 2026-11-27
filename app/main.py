@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.db import engine
+from app.identity.router import router as auth_router
 from app.rate_limit.middleware import RateLimitMiddleware, build_store
 from app.shared.errors import (
     BadRequestError,
@@ -79,6 +80,7 @@ app.add_exception_handler(NotFoundError, not_found_handler)
 app.add_exception_handler(ForbiddenError, forbidden_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
+app.include_router(auth_router)
 app.include_router(users_router)
 
 

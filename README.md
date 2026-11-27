@@ -37,6 +37,7 @@ flowchart LR
 | Users | create / list / get / patch; roles `admin` \| `member` \| `auditor` |
 | Lifecycle | `invited` → `active` → `disabled` (DB CHECK on disable timestamp) |
 | Self | `GET/PATCH /v1/me` |
+| Auth | `POST /v1/auth/login` (bcrypt password → JWT) |
 | Orgs | create / list / get |
 | Audit | same DB transaction as state changes |
 | Notify | create/status → transactional outbox → MailDev |
