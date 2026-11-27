@@ -91,8 +91,9 @@ def health() -> dict[str, str]:
 def ready() -> dict:
     checks: dict[str, str] = {}
     try:
+        ping = text("SELECT 1")
         with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+            conn.execute(ping)
         checks["database"] = "ok"
     except Exception as exc:
         raise HTTPException(
