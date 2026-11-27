@@ -7,6 +7,15 @@ cd "$ROOT"
 export JWT_SECRET="${JWT_SECRET:-dev-only-change-me-32bytes-min!!}"
 export DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://ums:ums@localhost:5433/user_mgmt}"
 
+echo "=== wait for API health ==="
+for _ in $(seq 1 60); do
+  if curl -sf localhost:8000/v1/health >/dev/null; then
+    break
+  fi
+  sleep 1
+done
+curl -sf localhost:8000/v1/health >/dev/null
+
 echo "=== seed ==="
 SEED_OUT="$(uv run python scripts/seed.py)"
 echo "$SEED_OUT"
@@ -65,4 +74,6 @@ echo
 echo "=== MailDev (welcome email) ==="
 sleep 3
 curl -sf http://localhost:1080/email | python -c 'import sys,json; m=json.load(sys.stdin); print("messages", len(m))'
+echo
+echo "Grafana LGTM: http://localhost:3000  (OTLP traces/logs/metrics)"
 echo "demo complete"

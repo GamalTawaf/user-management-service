@@ -16,14 +16,6 @@ class UserRole(enum.StrEnum):
     member = "member"
     auditor = "auditor"
 
-    @property
-    def people_name(self) -> str:
-        return {
-            UserRole.admin: "administrator",
-            UserRole.member: "member",
-            UserRole.auditor: "auditor",
-        }[self]
-
 
 class UserStatus(enum.StrEnum):
     invited = "invited"

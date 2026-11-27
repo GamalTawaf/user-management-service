@@ -3,9 +3,8 @@ from __future__ import annotations
 import contextlib
 import uuid
 
-from app.clock import get_today, utc_now
+from app.clock import utc_now
 from app.db import get_db
-from app.identity.models import UserRole
 from app.main import app
 from app.outbox.mailer import send_smtp
 from app.outbox.models import OutboxEvent, OutboxKind, OutboxStatus
@@ -40,9 +39,7 @@ from starlette.requests import Request as StarletteRequest
 from tests.conftest import assert_has_error_code, auth, role_headers
 
 
-def test_people_name_and_clock():
-    assert UserRole.admin.people_name == "administrator"
-    assert get_today()
+def test_clock_utc():
     assert utc_now().tzinfo is not None
 
 

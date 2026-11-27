@@ -20,18 +20,18 @@ from opentelemetry.trace.status import Status, StatusCode
 
 def test_redact_text_masks_email_jwt_bearer_and_fields():
     raw = (
-        "user=office@riverside.example.com "
+        "user=office@acme.example.com "
         "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.e30.sig "
-        'clinical_note="patient has diabetes" '
-        "denial_reason=Not medically necessary "
-        "member_id=22222222-2222-2222-2222-222222222222"
+        "password=hunter2 "
+        "jwt_secret=dev-only-change-me-32bytes-min!! "
+        "access_token=abc.def.ghi"
     )
     out = redact_text(raw)
-    assert "office@riverside.example.com" not in out
+    assert "office@acme.example.com" not in out
     assert "eyJhbGciOiJIUzI1NiJ9" not in out
-    assert "patient has diabetes" not in out
-    assert "Not medically necessary" not in out
-    assert "22222222-2222-2222-2222-222222222222" not in out
+    assert "hunter2" not in out
+    assert "dev-only-change-me-32bytes-min!!" not in out
+    assert "abc.def.ghi" not in out
     assert REDACTED in out
 
 
@@ -40,14 +40,14 @@ def test_filter_redacts_msg_and_args(caplog):
     logger.addFilter(PiiRedactingFilter())
     logger.setLevel(logging.INFO)
     with caplog.at_level(logging.INFO, logger="test.pii.filter"):
-        logger.info("note=%s email=%s", 'clinical_note="secret chart"', "a@b.co")
-        logger.info("payload %s", {"denial_reason": "too expensive", "ok": "keep"})
+        logger.info("note=%s email=%s", 'password="secret chart"', "a@b.co")
+        logger.info("payload %s", {"display_name": "too visible", "ok": "keep"})
         logger.info("list %s", ["user@example.com"])
         logger.info("tuple %s", ("password=hunter2",))
     text = caplog.text
     assert "secret chart" not in text
     assert "a@b.co" not in text
-    assert "too expensive" not in text
+    assert "too visible" not in text
     assert "hunter2" not in text
     assert "user@example.com" not in text
     assert "keep" in text
@@ -68,6 +68,21 @@ def test_filter_non_string_msg_and_empty_args():
     assert record.msg == 42
 
 
+def test_filter_getmessage_failure_falls_back():
+    record = logging.LogRecord(
+        name="test.pii",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="password=%d",
+        args=("not-an-int",),
+        exc_info=None,
+    )
+    assert PiiRedactingFilter().filter(record) is True
+    assert "not-an-int" not in record.msg
+    assert REDACTED in record.msg
+
+
 def test_redact_value_passthrough_and_containers():
     assert _redact_value(7) == 7
     assert _redact_value(("a@b.co",)) == (REDACTED,)
@@ -85,9 +100,13 @@ def test_install_pii_log_filter_idempotent():
 
 
 def test_scrub_db_statement_masks_sql_literals_and_fields():
-    sql = "INSERT INTO user_mgmt.users (email, display_name) VALUES ('patient@example.com', 'diabetes patient')"
+    sql = (
+        "INSERT INTO user_mgmt.users (email, display_name) "
+        "VALUES ('patient@example.com', 'diabetes patient')"
+    )
     out = scrub_db_statement(sql)
-    assert "patient has diabetes" not in out
+    assert "patient@example.com" not in out
+    assert "diabetes patient" not in out
     assert f"'{REDACTED}'" in out
 
 
@@ -96,13 +115,13 @@ def test_scrub_span_attributes_targets_statement_keys_only():
     attrs = scrub_span_attributes(
         {
             "db.statement": "UPDATE t SET n='secret note'",
-            "db.query.text": "SELECT 'ssn-value' FROM t",
+            "db.query.text": "SELECT 'token-value' FROM t",
             "db.system": "postgresql",
             "http.method": "GET",
         }
     )
     assert "secret note" not in attrs["db.statement"]
-    assert "ssn-value" not in attrs["db.query.text"]
+    assert "token-value" not in attrs["db.query.text"]
     assert attrs["db.system"] == "postgresql"
     assert attrs["http.method"] == "GET"
 

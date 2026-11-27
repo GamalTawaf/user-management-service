@@ -47,16 +47,20 @@ Every create / update / activate / disable / enable / org_create writes `audit_e
 
 Token-bucket limiter runs as ASGI middleware (before auth):
 
-- Key: client IP (`X-Forwarded-For` first hop, else peer host)
-- Backend: Redis when `REDIS_URL` is set (hash get/set); otherwise in-process memory (tests / local without Redis)
+- Key: client IP (`X-Forwarded-For` first hop, else peer host). **Caveat:** any client can spoof `X-Forwarded-For` unless a trusted reverse proxy strips/overwrites it. Treat the key as advisory for local demos; put a proxy in front before relying on per-IP fairness in production.
+- Backend: Redis when `REDIS_URL` is set (hash get/set); otherwise in-process memory (tests / local without Redis). **Caveat:** the in-process store is per-process — multi-worker / multi-replica deploys need Redis for a shared bucket.
 - Defaults: capacity `120`, refill `2` tokens/sec (`RATE_LIMIT_CAPACITY`, `RATE_LIMIT_REFILL_PER_SECOND`)
 - Exempt: `/v1/health`, OpenAPI docs paths
 - Responses: `X-RateLimit-Limit` / `X-RateLimit-Remaining`; on reject `429` ProblemBody (`rate_limited`) + `Retry-After`
 - Telemetry: `ums.rate_limit.allowed` / `ums.rate_limit.rejected` counters, `rate_limit.consume` spans, Redis client instrumentation; stdlib/uvicorn logs via OTLP → Loki when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`LOG_LEVEL`, default `INFO`)
 
+### Orgs
+
+Organizations are first-class tenants (`POST/GET /v1/orgs`). Users may optionally belong to one org (`org_id`); auditors can read orgs, admins mutate.
+
 ### Cut list
 
-No real IdP, password reset flows, GraphQL, microservices, AWS deploy, SES.
+No real IdP, password reset flows, GraphQL, microservices, AWS deploy, SES. Local `.env.example` documents knobs; Compose injects its own env.
 
 ## How to run
 
