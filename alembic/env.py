@@ -1,15 +1,14 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool, text
-
 from app.audit.models import AuditEvent  # noqa: F401
 from app.config import settings
-from app.db import APP_SCHEMA, Base
+from app.db import Base, ensure_app_schema, migration_advisory_lock
 from app.identity.models import User  # noqa: F401
 from app.orgs.models import Organization  # noqa: F401
 from app.outbox.models import OutboxEvent  # noqa: F401
 from app.users.idempotency import IdempotencyRecord  # noqa: F401
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
@@ -39,8 +38,8 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    with connectable.connect() as connection:
-        connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {APP_SCHEMA}"))
+    with connectable.connect() as connection, migration_advisory_lock(connection):
+        ensure_app_schema(connection)
         connection.commit()
         context.configure(
             connection=connection,
