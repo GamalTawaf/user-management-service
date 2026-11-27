@@ -89,11 +89,14 @@ def create_user(
     )
     enqueue_user_welcome(db, user)
 
-    if idempotency_key is None or request_hash is None or idem_scope is None:
+    # Router sets request_hash + scope whenever Idempotency-Key is present.
+    if idempotency_key is None:
         db.commit()
         db.refresh(user)
         return user
 
+    assert request_hash is not None
+    assert idem_scope is not None
     db.refresh(user)
     response = to_user_out(user)
     store_record(

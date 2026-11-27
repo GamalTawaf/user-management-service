@@ -85,9 +85,7 @@ def test_install_pii_log_filter_idempotent():
 
 
 def test_scrub_db_statement_masks_sql_literals_and_fields():
-    sql = (
-        "INSERT INTO prior_auth.prior_auth_requests (clinical_note) VALUES ('patient has diabetes')"
-    )
+    sql = "INSERT INTO user_mgmt.users (email, display_name) VALUES ('patient@example.com', 'diabetes patient')"
     out = scrub_db_statement(sql)
     assert "patient has diabetes" not in out
     assert f"'{REDACTED}'" in out

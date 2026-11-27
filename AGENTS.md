@@ -1,6 +1,6 @@
 # AGENTS.md
 
-User Management API (public portfolio). Durable Python + PostgreSQL backend showcasing JWT/RBAC, audit, outbox, idempotency, and CI gates — without prior-auth domain code.
+User Management API (public portfolio). Durable Python + PostgreSQL backend showcasing JWT/RBAC, audit, outbox, idempotency, rate limiting, and CI gates — without prior-auth domain code.
 
 ## Status
 
@@ -8,7 +8,7 @@ User Management API (public portfolio). Durable Python + PostgreSQL backend show
 
 ## Startup
 
-1. `pwd` → this repo root (`prior-auth-api` folder / `user-management-api` package)
+1. `pwd` → this repo root (`user-management-service` / `user-management-api` package)
 2. Read this file + `README_FULL.md` Decisions when touching domain behavior
 3. `docker compose up -d && uv sync && uv run alembic upgrade head && uv run python scripts/seed.py`
 4. `./scripts/gates.sh` before claiming done
@@ -21,12 +21,13 @@ Mirrored in `.agent/rules/coding-gates.mdc`. Prefer `tests/conftest.py` helpers;
 
 ```
 app/
-  identity/   # User, roles, JWT, RBAC
-  orgs/       # Organization tenant
-  users/      # CRUD + lifecycle services/router
-  audit/      # AuditEvent + writer
-  outbox/     # welcome/status email worker
-  shared/     # errors, deps, middleware
+  identity/    # User, roles, JWT, RBAC
+  orgs/        # Organization tenant
+  users/       # CRUD + lifecycle services/router
+  audit/       # AuditEvent + writer
+  outbox/      # welcome/status email worker
+  rate_limit/  # token-bucket middleware (Redis or in-process)
+  shared/      # errors, deps, middleware
 ```
 
 ## Verification

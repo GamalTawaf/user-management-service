@@ -3,7 +3,7 @@
     {
       "id": "ums-001",
       "name": "User management domain",
-      "description": "Orgs + users with admin/member/auditor roles; invited/active/disabled lifecycle; /me; audit; outbox welcome/status; Idempotency-Key on create; stats.",
+      "description": "Orgs + users with admin/member/auditor roles; invited/active/disabled lifecycle; /me; audit; outbox welcome/status; Idempotency-Key on create; stats; Redis/in-process rate limiting.",
       "status": "done",
       "verify": "uv run pytest -q && ./scripts/demo.sh"
     }

@@ -9,7 +9,7 @@ command -v grit >/dev/null || {
   exit 1
 }
 
-PARK="$(mktemp -d /tmp/challenge-grit-park.XXXXXX)"
+PARK="$(mktemp -d /tmp/ums-grit-park.XXXXXX)"
 cleanup() {
   for name in .worktrees .venv mutants; do
     if [[ -e "$PARK/$name" && ! -e "$ROOT/$name" ]]; then

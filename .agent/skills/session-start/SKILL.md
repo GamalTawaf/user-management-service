@@ -1,8 +1,9 @@
 ---
 name: session-start
 description: >-
-  Use at the start of a coding session on this prior-auth repo. Syncs git, loads
-  the short harness reading path, and skips full historical plans unless needed.
+  Use at the start of a coding session on this user-management repo. Syncs git,
+  loads the short harness reading path, and skips full historical plans unless
+  needed.
 ---
 
 # Session start
@@ -24,7 +25,7 @@ git rev-list --left-right --count HEAD...origin/main
 
 ## Then
 
-- No new product scope unless the user asks (feat-001…012 done)
+- No new product scope unless the user asks (`ums-001` done)
 - Parallel agents → load `grit-parallel`
 - Shipping → load `open-pr` / `stacked-prs` as needed
 - Before claiming done → `./scripts/gates.sh`

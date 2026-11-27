@@ -40,7 +40,7 @@ export JWT_SECRET=dev-only-change-me-32bytes-min!!
 ./scripts/generate_postman_collection.py
 ```
 
-Import `postman/Prior_Auth_API*.json` after regenerating (filenames kept until a follow-up rename).
+Import `postman/User_Management_API*.json` after regenerating.
 
 ## 4. Demo
 

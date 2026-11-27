@@ -34,5 +34,5 @@ jobs:
               - '.python-version'
               - '.github/workflows/**'
               - '.github/actions/**'
-              - 'postman/Prior_Auth_API.postman_collection.json'
-              - 'postman/Prior_Auth_API.postman_environment.json'
+              - 'postman/User_Management_API.postman_collection.json'
+              - 'postman/User_Management_API.postman_environment.json'

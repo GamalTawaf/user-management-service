@@ -208,7 +208,13 @@ def role_headers(client: TestClient, role: str) -> dict[str, str]:
     return auth(client.seed["tokens"][role])  # type: ignore[index]
 
 
-def assert_has_error_code(response, code: str, *, field: str | None = None) -> dict:
+def assert_has_error_code(
+    response,
+    code: str,
+    *,
+    field: str | None = None,
+    message: str | None = None,
+) -> dict:
     assert response.status_code == 422, response.text
     body = response.json()
     errors = body.get("errors") or []
@@ -216,7 +222,27 @@ def assert_has_error_code(response, code: str, *, field: str | None = None) -> d
     assert match, body
     if field is not None:
         assert any(e.get("field") == field for e in match), body
+    if message is not None:
+        assert any(e.get("message") == message for e in match), body
     return body
+
+
+def assert_detail(response, status_code: int, detail: str) -> dict:
+    assert response.status_code == status_code, response.text
+    body = response.json()
+    assert body.get("detail") == detail, body
+    return body
+
+
+def latest_audit(client, user_id: str, action: str) -> dict:
+    audit = client.get(
+        f"/v1/users/{user_id}/audit",
+        headers=role_headers(client, "auditor"),
+    )
+    assert audit.status_code == 200, audit.text
+    rows = [row for row in audit.json() if row["action"] == action]
+    assert rows, audit.json()
+    return rows[-1]
 
 
 def encode_raw_jwt(payload: dict) -> str:

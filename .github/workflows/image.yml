@@ -19,4 +19,4 @@ jobs:
         if: ${{ inputs.code }}
       - name: docker build (no push)
         if: ${{ inputs.code }}
-        run: ./scripts/ci_run.sh "docker build" --tail 30 -- docker build -t prior-auth-api:ci .
+        run: ./scripts/ci_run.sh "docker build" --tail 30 -- docker build -t user-management-api:ci .

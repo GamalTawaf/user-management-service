@@ -10,7 +10,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from app.config import settings
 
-_tracer = trace.get_tracer("prior-auth-api.smtp")
+_tracer = trace.get_tracer("user-management-api.smtp")
 
 
 def send_smtp(to: str, subject: str, body: str) -> None:

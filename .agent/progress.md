@@ -1,20 +1,20 @@
 # Progress
 
-## Shipped (2026-11-26)
+## Shipped (2026-11-27)
 
-All `.agent/feature_list.json` items **done** (feat-001…012).
+All `.agent/feature_list.json` items **done** (`ums-001`).
 
 | Slice | What’s in the tree |
 |-------|--------------------|
-| Core | Submit / intake support / claim race / COI / decide / reassign / member redaction / audit API |
-| Tooling | Alembic, seed JWTs, Compose, multi-stage Docker, CI (lint/test/mutate/image), mutmut, `demo.sh`, Postman generator |
-| Wishlist | Workload API, outbox→MailDev, auditor role, `Idempotency-Key` on submit, README/demo walkthrough |
+| Core | Orgs + users; admin/member/auditor RBAC; invited→active→disabled lifecycle; `/me`; audit-in-transaction; Idempotency-Key on create; stats |
+| Tooling | Alembic, seed JWTs, Compose (db/redis/api/outbox/maildev/otel), multi-stage Docker, CI (lint/test/mutate/image), mutmut on `app/users/services`, `demo.sh`, Postman generator |
+| Stretch | Outbox→MailDev, Redis token-bucket rate limiting + OTel, auditor role |
 
 **Verify:** `./init.sh` · `./scripts/gates.sh` · `./scripts/demo.sh`
 
-**Handoff:** `.agent/session-handoff.md` (system complete — no next feature).
+**Handoff:** `.agent/session-handoff.md` (system complete — no next feature unless new scope).
 
 ## Earlier session log (condensed)
 
-- 2026-11-24 — MVP plan + feat-001…007; coding gates + PR lanes into AGENTS / Cursor rules
-- 2026-11-25 — Wishlist plan + feat-008…012 implemented (workload → outbox → auditor → idempotency → docs)
+- 2026-11-26 — Public portfolio tree rewritten from prior-auth scaffolding to UMS domain
+- 2026-11-27 — Rate limiting; rewrite cleanup (Postman/CI naming, agent docs)

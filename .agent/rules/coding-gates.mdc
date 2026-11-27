@@ -7,8 +7,8 @@ alwaysApply: true
 
 ## Deduplication (required)
 
-- **Tests:** no copy-pasted HTTP/setup. Prefer `tests/conftest.py` helpers (`submit_ok`, `submit_and_claim`, `claim_as`, `decide_as`, `assert_has_error_code`, …) or `@pytest.mark.parametrize`. Add a helper when the same sequence appears twice.
-- **App:** extract shared utils when the same logic appears in 2+ places (e.g. `app/prior_auth/services/common.py`: `has_coi`, `get_request`, `audit_commit_refresh`; `raise_validation` / `raise_field` in `app/shared/errors.py`). Do not invent layers for single use.
+- **Tests:** no copy-pasted HTTP/setup. Prefer `tests/conftest.py` helpers (`role_headers`, `assert_has_error_code`, …) or `@pytest.mark.parametrize`. Add a helper when the same sequence appears twice.
+- **App:** extract shared utils when the same logic appears in 2+ places (e.g. `app/users/services/common.py`; `raise_validation` / `raise_field` in `app/shared/errors.py`). Do not invent layers for single use.
 
 ## Call style (enforced by `scripts/check_call_style.py`)
 
@@ -20,7 +20,7 @@ alwaysApply: true
 
 - **ruff** format + check on `app` `tests` `scripts` (see `pyproject.toml`).
 - **FastAPI compile** via `scripts/check_fastapi_compile.py` (import `app.main:app`, OpenAPI path sanity).
-- **Postman fresh** via `scripts/check_postman_collection.py` (committed `postman/Prior_Auth_API*.json` match a fresh generate).
+- **Postman fresh** via `scripts/check_postman_collection.py` (committed `postman/User_Management_API*.json` match a fresh generate).
 - **pytest** with **100%** line+branch coverage (`fail_under = 100`).
 - Run `./scripts/gates.sh` before claiming done. Pre-commit uses `GATES_SKIP_TESTS=1`; full suite still in CI / `./init.sh`.
 - Every gate/CI step must emit a **visible summary** (stdout `### …` and `$GITHUB_STEP_SUMMARY` when set). New pipeline steps must follow `run_step` / the CI `| tee` + summary pattern.

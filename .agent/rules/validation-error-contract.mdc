@@ -1,0 +1,22 @@
+---
+description: Validation failures use durable FieldError contract, not stock FastAPI 422 alone
+globs: app/users/**,app/shared/errors.py,tests/test_users.py,tests/test_coverage_ums.py
+alwaysApply: false
+---
+
+# Validation error contract
+
+## Do
+
+- Domain validation failures must surface `error_code` / `field` / `message` (and `correlation_id` when raised via `raise_validation`).
+- Prefer shared `raise_validation` / `raise_field` helpers; keep multi-field errors.
+
+## Don't
+
+- Rely on FastAPI’s stock `{"detail":[…]}` 422 as the client-facing contract for user/org writes that have domain rules.
+
+## Verify
+
+```bash
+uv run pytest tests/test_users.py tests/test_coverage_ums.py -q
+```
