@@ -1,18 +1,17 @@
+"""Shared query/validation helpers (excluded from mutmut — equivalent mutants)."""
+
 from __future__ import annotations
 
-import logging
 import re
 import uuid
 
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from app.audit.writer import write_audit
 from app.identity.models import User
 from app.shared.errors import FieldError, NotFoundError
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-_log = logging.getLogger(__name__)
 
 
 def validate_email(value: str) -> list[FieldError]:
@@ -64,25 +63,3 @@ def apply_after_id(
     newer = created > cursor_created
     tie = (created == cursor_created) & (rid > after)
     return ordered.where(newer | tie)
-
-
-def audit_commit_refresh(
-    db: Session,
-    user: User,
-    *,
-    actor_user_id: uuid.UUID,
-    action: str,
-    payload: dict,
-) -> User:
-    write_audit(
-        db,
-        actor_user_id=actor_user_id,
-        action=action,
-        payload=payload,
-        subject_user_id=user.uuid,
-    )
-    db.commit()
-    db.refresh(user)
-    user_id = str(user.uuid)
-    _log.info("user_mutation action=%s user_id=%s", action, user_id)
-    return user

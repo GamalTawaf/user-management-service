@@ -11,7 +11,7 @@ import time
 
 from app.config import settings
 from app.db import SessionLocal
-from app.outbox.services import process_batch
+from app.outbox.service import process_batch
 from app.telemetry import configure_telemetry
 
 _log = logging.getLogger(__name__)

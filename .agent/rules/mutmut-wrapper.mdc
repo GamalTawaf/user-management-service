@@ -9,7 +9,7 @@ alwaysApply: false
 ## Do
 
 - Run mutation testing only via `./scripts/run_mutmut.sh` (creates per-child DBs, sets workers, clears stale `mutants/` unless `MUTMUT_KEEP_CACHE=1`).
-- Scope stays `only_mutate=app/users/services/*` with `source_paths=app/` (see `setup.cfg`).
+- Scope stays `only_mutate=app/users/service.py` with `source_paths=app/` (see `setup.cfg`).
 
 ## Don't
 

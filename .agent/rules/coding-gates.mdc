@@ -8,7 +8,13 @@ alwaysApply: true
 ## Deduplication (required)
 
 - **Tests:** no copy-pasted HTTP/setup. Prefer `tests/conftest.py` helpers (`role_headers`, `assert_has_error_code`, …) or `@pytest.mark.parametrize`. Add a helper when the same sequence appears twice.
-- **App:** extract shared utils when the same logic appears in 2+ places (e.g. `app/users/services/common.py`; `raise_validation` / `raise_field` in `app/shared/errors.py`). Do not invent layers for single use.
+- **App:** extract shared utils when the same logic appears in 2+ places (e.g. helpers in `app/users/service.py`; `raise_validation` / `raise_field` in `app/shared/errors.py`). Do not invent layers for single use.
+
+## Domain services (required)
+
+- One `service.py` per domain package (`users`, `audit`, `outbox`, …) for use-case / write helpers. Same shape across domains — do not invent domain-specific layouts.
+- Do **not** split use-cases into a `services/` package (`create.py`, `lifecycle.py`, `orgs.py`, …) or add `writer.py` / other one-off layers for thin writers.
+- Shared query/validation helpers may live in a sibling `helpers.py` (not a use-case split). Models stay Declarative (schema only). Routers/workers import from that domain’s `service.py`.
 
 ## Call style (enforced by `scripts/check_call_style.py`)
 
