@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-import re
 import uuid
 
-from sqlalchemy import Select, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.audit.service import write_audit
@@ -17,67 +16,29 @@ from app.shared.errors import (
     ConflictError,
     FieldError,
     ForbiddenError,
-    NotFoundError,
     raise_field,
     raise_validation,
 )
+from app.users.helpers import apply_after_id, get_user, validate_email
 from app.users.idempotency import store_record
 from app.users.schemas import CreateOrgIn, CreateUserIn, PatchMeIn, UpdateUserIn
 from app.users.serializers import to_user_out
 
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# Re-export helpers so callers keep importing from service.
+__all__ = (
+    "activate_user",
+    "apply_after_id",
+    "create_organization",
+    "create_user",
+    "disable_user",
+    "enable_user",
+    "get_user",
+    "patch_me",
+    "update_user",
+    "validate_email",
+)
+
 _log = logging.getLogger(__name__)
-
-
-def validate_email(value: str) -> list[FieldError]:
-    email = value.strip().lower()
-    if not EMAIL_RE.match(email):
-        return [
-            FieldError(
-                error_code="invalid_email",
-                field="email",
-                message="Email format looks invalid",
-            )
-        ]
-    return []
-
-
-def get_user(db: Session, user_id: uuid.UUID, *, for_update: bool = False) -> User:
-    stmt = select(User).where(User.uuid == user_id)
-    if for_update:
-        stmt = stmt.with_for_update()
-    user = db.scalar(stmt)
-    if user is None:
-        raise NotFoundError("User not found")
-    return user
-
-
-def apply_after_id(
-    stmt: Select[tuple[User]],
-    *,
-    after: uuid.UUID | None,
-    newest_first: bool,
-) -> Select[tuple[User]]:
-    created = User.created_at
-    rid = User.uuid
-    created_desc = created.desc()
-    rid_desc = rid.desc()
-    created_asc = created.asc()
-    rid_asc = rid.asc()
-    if newest_first:
-        ordered = stmt.order_by(created_desc, rid_desc)
-    else:
-        ordered = stmt.order_by(created_asc, rid_asc)
-    if after is None:
-        return ordered
-    cursor_created = select(created).where(rid == after).scalar_subquery()
-    if newest_first:
-        older = created < cursor_created
-        tie = (created == cursor_created) & (rid < after)
-        return ordered.where(older | tie)
-    newer = created > cursor_created
-    tie = (created == cursor_created) & (rid > after)
-    return ordered.where(newer | tie)
 
 
 def audit_commit_refresh(
