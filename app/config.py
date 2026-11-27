@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@user-mgmt.local"
     outbox_poll_seconds: float = 2.0
     outbox_batch_size: int = 20
+    outbox_max_attempts: int = 5
     redis_url: str = ""
     rate_limit_enabled: bool = True
     rate_limit_capacity: int = 120

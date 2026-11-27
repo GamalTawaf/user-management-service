@@ -78,9 +78,14 @@ def mark_sent(db: Session, event: OutboxEvent) -> None:
 
 
 def mark_failed(db: Session, event: OutboxEvent, error: str) -> None:
-    event.status = OutboxStatus.failed
+    """Record a send error; keep pending until attempts reach outbox_max_attempts."""
     event.attempts = event.attempts + 1
     event.last_error = error[:2000]
+    max_attempts = settings.outbox_max_attempts
+    if event.attempts >= max_attempts:
+        event.status = OutboxStatus.failed
+    else:
+        event.status = OutboxStatus.pending
 
 
 def process_batch(db: Session, *, send_fn=send_smtp, limit: int | None = None) -> int:
@@ -93,7 +98,20 @@ def process_batch(db: Session, *, send_fn=send_smtp, limit: int | None = None) -
         except Exception as exc:
             err = str(exc)
             mark_failed(db, event, err)
-            _log.warning("outbox_send_failed event_id=%s error=%s", event_id, err)
+            if event.status == OutboxStatus.failed:
+                _log.warning(
+                    "outbox_send_failed event_id=%s attempts=%s error=%s",
+                    event_id,
+                    event.attempts,
+                    err,
+                )
+            else:
+                _log.warning(
+                    "outbox_send_retry event_id=%s attempts=%s error=%s",
+                    event_id,
+                    event.attempts,
+                    err,
+                )
         else:
             mark_sent(db, event)
             _log.info("outbox_send_ok event_id=%s kind=%s", event_id, event.kind)

@@ -4,6 +4,7 @@ import contextlib
 import uuid
 
 from app.clock import utc_now
+from app.config import settings
 from app.db import get_db
 from app.main import app
 from app.outbox.mailer import send_smtp
@@ -33,6 +34,7 @@ from app.telemetry import configure_telemetry, setup_telemetry
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.requests import Request as StarletteRequest
 
@@ -170,8 +172,26 @@ def test_mailer_noop_and_outbox(db: Session, client: TestClient, caplog):
     db.flush()
     with caplog.at_level(logging.WARNING, logger="app.outbox.service"):
         assert process_batch(db, send_fn=boom) == 1
-    assert "outbox_send_failed" in caplog.text
+    assert "outbox_send_retry" in caplog.text
     assert "smtp down" in caplog.text
+    pending = db.scalars(
+        select(OutboxEvent).where(OutboxEvent.status == OutboxStatus.pending)
+    ).all()
+    assert any(row.last_error and "smtp down" in row.last_error for row in pending)
+
+    exhausted = OutboxEvent(
+        kind=OutboxKind.user_welcome,
+        payload={"to": "fail@y.z", "subject": "s", "body": "b"},
+        status=OutboxStatus.pending,
+        attempts=settings.outbox_max_attempts - 1,
+    )
+    db.add(exhausted)
+    db.flush()
+    with caplog.at_level(logging.WARNING, logger="app.outbox.service"):
+        assert process_batch(db, send_fn=boom) >= 1
+    assert "outbox_send_failed" in caplog.text
+    db.refresh(exhausted)
+    assert exhausted.status == OutboxStatus.failed
 
 
 def test_worker_run_once(db: Session, monkeypatch):
