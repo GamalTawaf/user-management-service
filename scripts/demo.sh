@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 export JWT_SECRET="${JWT_SECRET:-dev-only-change-me-32bytes-min!!}"
-export DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://ums:ums@localhost:5432/user_mgmt}"
+export DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://ums:ums@localhost:5433/user_mgmt}"
 
 echo "=== seed ==="
 SEED_OUT="$(uv run python scripts/seed.py)"

@@ -15,7 +15,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://ums:ums@localhost:5432/user_mgmt")
+os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://ums:ums@localhost:5433/user_mgmt")
 os.environ.setdefault("JWT_SECRET", "test-secret-32-bytes-minimum!!!!")
 # High ceiling so suite traffic never trips the shared in-process bucket.
 os.environ.setdefault("RATE_LIMIT_CAPACITY", "100000")
