@@ -12,6 +12,26 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 
+class _FakeRedis:
+    """Minimal hash store for RedisTokenBucket unit tests."""
+
+    def __init__(self) -> None:
+        self._hashes: dict[str, dict[str, float]] = {}
+
+    def hmget(self, key: str, *fields: str):
+        row = self._hashes.get(key, {})
+        return [row.get(field) for field in fields]
+
+    def hset(self, key: str, mapping: dict):
+        row = self._hashes.setdefault(key, {})
+        for field, value in mapping.items():
+            row[str(field)] = float(value)
+        return len(mapping)
+
+    def pexpire(self, key: str, _ttl_ms: int):
+        return 1 if key in self._hashes else 0
+
+
 def test_memory_bucket_allows_then_rejects():
     bucket = MemoryTokenBucket(capacity=2, refill_per_second=0.0)
     first = bucket.consume("k")
@@ -46,15 +66,7 @@ def test_build_store_memory_and_redis_url():
     assert name == "memory"
     assert isinstance(memory, MemoryTokenBucket)
 
-    class FakeRedis:
-        def register_script(self, _script):
-            def _run(*, keys, args):
-                return [1, int(args[0]) - 1, 0]
-
-            return _run
-
-    # Patch from_url by exercising RedisTokenBucket directly (no live Redis).
-    redis_bucket = RedisTokenBucket(FakeRedis(), capacity=5, refill_per_second=1.0)
+    redis_bucket = RedisTokenBucket(_FakeRedis(), capacity=5, refill_per_second=1.0)
     result = redis_bucket.consume("rl:1.2.3.4")
     assert result.allowed
     assert result.remaining == 4
@@ -62,32 +74,37 @@ def test_build_store_memory_and_redis_url():
 
 
 def test_redis_bucket_reject_path():
-    class FakeRedis:
-        def register_script(self, _script):
-            def _run(*, keys, args):
-                return [0, 0, 1500]
+    fake = _FakeRedis()
+    bucket = RedisTokenBucket(fake, capacity=1, refill_per_second=0.0)
+    assert bucket.consume("rl:x").allowed
+    denied = bucket.consume("rl:x")
+    assert not denied.allowed
+    assert denied.remaining == 0
+    assert denied.retry_after_ms == 60_000
 
-            return _run
 
-    bucket = RedisTokenBucket(FakeRedis(), capacity=3, refill_per_second=1.0)
-    result = bucket.consume("rl:x")
-    assert not result.allowed
-    assert result.retry_after_ms == 1500
-    assert result.remaining == 0
+def test_redis_bucket_refills_and_parses_bytes():
+    fake = _FakeRedis()
+    bucket = RedisTokenBucket(fake, capacity=1, refill_per_second=1000.0)
+    assert bucket.consume("rl:b").allowed
+    # Simulate Redis returning byte strings on the next read.
+    fake._hashes["rl:b"] = {"tokens": 0.0, "ts": (time.time() * 1000.0) - 5.0}
+    # Force hmget to return bytes like decode_responses=False clients.
+    original = fake.hmget
+
+    def _hmget_bytes(key: str, *fields: str):
+        values = original(key, *fields)
+        return [None if v is None else str(v).encode() for v in values]
+
+    fake.hmget = _hmget_bytes  # type: ignore[method-assign]
+    assert bucket.consume("rl:b").allowed
 
 
 def test_build_store_with_redis_url_uses_redis(monkeypatch):
-    class FakeClient:
-        def register_script(self, _script):
-            def _run(*, keys, args):
-                return [1, 9, 0]
-
-            return _run
-
     import redis as redis_lib
 
     def _fake_from_url(*_a, **_k):
-        return FakeClient()
+        return _FakeRedis()
 
     monkeypatch.setattr(redis_lib, "from_url", _fake_from_url)
     store, name = build_store(
