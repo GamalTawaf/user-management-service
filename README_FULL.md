@@ -48,7 +48,7 @@ Every create / update / activate / disable / enable / org_create writes `audit_e
 Token-bucket limiter runs as ASGI middleware (before auth):
 
 - Key: client IP (`X-Forwarded-For` first hop, else peer host)
-- Backend: Redis when `REDIS_URL` is set (atomic Lua); otherwise in-process memory (tests / local without Redis)
+- Backend: Redis when `REDIS_URL` is set (hash get/set); otherwise in-process memory (tests / local without Redis)
 - Defaults: capacity `120`, refill `2` tokens/sec (`RATE_LIMIT_CAPACITY`, `RATE_LIMIT_REFILL_PER_SECOND`)
 - Exempt: `/v1/health`, OpenAPI docs paths
 - Responses: `X-RateLimit-Limit` / `X-RateLimit-Remaining`; on reject `429` ProblemBody (`rate_limited`) + `Retry-After`
