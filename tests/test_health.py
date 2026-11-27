@@ -56,7 +56,10 @@ def test_ready_database_down(client: TestClient, monkeypatch):
         def __exit__(self, *args):
             return False
 
-    monkeypatch.setattr("app.main.engine.connect", lambda: _Boom())
+    def _connect():
+        return _Boom()
+
+    monkeypatch.setattr("app.main.engine.connect", _connect)
     response = client.get("/v1/ready")
     assert response.status_code == 503
 
