@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
+from sqlalchemy import text
 
 from app.config import settings
+from app.db import engine
 from app.rate_limit.middleware import RateLimitMiddleware, build_store
 from app.shared.errors import (
     BadRequestError,
@@ -36,6 +38,7 @@ _TRACE_ID_OPENAPI = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings.validate_security()
     setup_telemetry(app)
     yield
 
@@ -82,6 +85,38 @@ app.include_router(users_router)
 @app.get("/v1/health", tags=["health"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/v1/ready", tags=["health"])
+def ready() -> dict:
+    checks: dict[str, str] = {}
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        checks["database"] = "ok"
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="database unavailable",
+        ) from exc
+
+    redis_url = settings.redis_url.strip()
+    if redis_url:
+        import redis as redis_lib
+
+        client = redis_lib.from_url(redis_url, socket_connect_timeout=1.0)
+        try:
+            client.ping()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="redis unavailable",
+            ) from exc
+        finally:
+            client.close()
+        checks["redis"] = "ok"
+
+    return {"status": "ok", "checks": checks}
 
 
 _HTTP_METHODS = ("get", "post", "put", "patch", "delete", "head", "options")

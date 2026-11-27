@@ -11,7 +11,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from app.rate_limit import metrics
 from app.rate_limit.bucket import BucketResult, MemoryTokenBucket, RedisTokenBucket
 
-_EXEMPT_PATHS = frozenset({"/v1/health", "/openapi.json", "/docs", "/redoc"})
+_EXEMPT_PATHS = frozenset({"/v1/health", "/v1/ready", "/openapi.json", "/docs", "/redoc"})
 
 
 def client_ip(scope: Scope) -> str:
