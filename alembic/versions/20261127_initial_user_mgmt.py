@@ -13,6 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from app.db import ensure_app_schema
+
 revision: str = "20261127_initial"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -22,7 +24,7 @@ SCHEMA = "user_mgmt"
 
 
 def upgrade() -> None:
-    op.execute(sa.text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
+    ensure_app_schema(op.get_bind())
     op.execute(
         sa.text(
             f"""
