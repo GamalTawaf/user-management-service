@@ -31,6 +31,7 @@ Health: http://localhost:8000/v1/health
 | Audit | same DB transaction as state changes |
 | Notify | create/status → transactional outbox → MailDev |
 | Idempotency | `Idempotency-Key` on `POST /v1/users` |
+| Rate limit | token bucket per client IP; Redis (`REDIS_URL`) or in-process; OTel counters/spans; `429` + `Retry-After` / `X-RateLimit-*` |
 
 ## 3. Postman
 

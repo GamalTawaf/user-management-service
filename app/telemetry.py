@@ -11,6 +11,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExp
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
@@ -29,10 +30,11 @@ from app.log_pii import ScrubbingSpanExporter, install_pii_log_filter
 
 _providers_ready = False
 _sqlalchemy_instrumented = False
+_redis_instrumented = False
 
 
 def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
-    global _providers_ready, _sqlalchemy_instrumented
+    global _providers_ready, _sqlalchemy_instrumented, _redis_instrumented
 
     install_pii_log_filter()
 
@@ -75,6 +77,11 @@ def configure_telemetry(*, fastapi_app: FastAPI | None = None) -> None:
             skip_dep_check=True,
         )
         _sqlalchemy_instrumented = True
+
+    if not _redis_instrumented:
+        tracer_provider = trace.get_tracer_provider()
+        RedisInstrumentor().instrument(tracer_provider=tracer_provider)
+        _redis_instrumented = True
 
     if fastapi_app is not None:
         tracer_provider = trace.get_tracer_provider()

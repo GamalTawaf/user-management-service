@@ -17,6 +17,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://ums:ums@localhost:5432/user_mgmt")
 os.environ.setdefault("JWT_SECRET", "test-secret-32-bytes-minimum!!!!")
+# High ceiling so suite traffic never trips the shared in-process bucket.
+os.environ.setdefault("RATE_LIMIT_CAPACITY", "100000")
+os.environ.setdefault("RATE_LIMIT_REFILL_PER_SECOND", "1000")
+os.environ.setdefault("REDIS_URL", "")
 
 from app.audit import models as _audit_models  # noqa: F401
 from app.config import settings

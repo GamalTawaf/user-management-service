@@ -43,13 +43,24 @@ Every create / update / activate / disable / enable / org_create writes `audit_e
 
 `Idempotency-Key` on `POST /v1/users` only; scoped per admin. Same key + body → replay 201; different body → 409.
 
+### Rate limiting
+
+Token-bucket limiter runs as ASGI middleware (before auth):
+
+- Key: client IP (`X-Forwarded-For` first hop, else peer host)
+- Backend: Redis when `REDIS_URL` is set (atomic Lua); otherwise in-process memory (tests / local without Redis)
+- Defaults: capacity `120`, refill `2` tokens/sec (`RATE_LIMIT_CAPACITY`, `RATE_LIMIT_REFILL_PER_SECOND`)
+- Exempt: `/v1/health`, OpenAPI docs paths
+- Responses: `X-RateLimit-Limit` / `X-RateLimit-Remaining`; on reject `429` ProblemBody (`rate_limited`) + `Retry-After`
+- Telemetry: `ums.rate_limit.allowed` / `ums.rate_limit.rejected` counters, `rate_limit.consume` spans, Redis client instrumentation
+
 ### Cut list
 
 No real IdP, password reset flows, GraphQL, microservices, AWS deploy, SES.
 
 ## How to run
 
-See [`README.md`](README.md). Compose services: `db`, `api`, `outbox-worker`, `maildev`, `otel-lgtm`.
+See [`README.md`](README.md). Compose services: `db`, `redis`, `api`, `outbox-worker`, `maildev`, `otel-lgtm`.
 
 ## Gates / CI
 
