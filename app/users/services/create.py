@@ -5,7 +5,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.audit.writer import write_audit
+from app.audit.service import write_audit
 from app.identity.models import User, UserRole, UserStatus
 from app.identity.schemas import UserContext
 from app.orgs.models import Organization

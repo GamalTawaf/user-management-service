@@ -7,7 +7,7 @@ import uuid
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from app.audit.writer import write_audit
+from app.audit.service import write_audit
 from app.identity.models import User
 from app.shared.errors import FieldError, NotFoundError
 

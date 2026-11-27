@@ -4,7 +4,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from app.audit.writer import write_audit
+from app.audit.service import write_audit
 from app.identity.schemas import UserContext
 from app.orgs.models import Organization
 from app.shared.errors import FieldError, raise_validation
