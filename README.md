@@ -16,7 +16,8 @@ uv run python scripts/seed.py
 ```
 
 API: http://localhost:8000/docs  
-Health: http://localhost:8000/v1/health
+Health: http://localhost:8000/v1/health  
+Ready: http://localhost:8000/v1/ready
 
 ```mermaid
 flowchart LR
@@ -66,5 +67,5 @@ docker compose up -d
 ## 5. Next steps (portfolio)
 
 - [ ] Point `JWT_SECRET` at a long random value (see `.env.example`)
-- [ ] Prefer `/v1/ready` once landed for orchestrator probes (DB/Redis)
+- [ ] Point orchestrators at `/v1/ready` (DB + Redis when configured)
 - [ ] Review rate-limit XFF trust before putting this behind a reverse proxy
