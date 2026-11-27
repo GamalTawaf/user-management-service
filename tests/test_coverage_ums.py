@@ -145,14 +145,18 @@ def _noop_send(*_a, **_k):
     return None
 
 
-def test_mailer_noop_and_outbox(db: Session, client: TestClient):
+def test_mailer_noop_and_outbox(db: Session, client: TestClient, caplog):
+    import logging
+
     send_smtp("a@b.co", "s", "b")  # smtp_host empty → no-op
     client.post(
         "/v1/users",
         headers=role_headers(client, "admin"),
         json={"email": "outbox@example.com", "display_name": "O", "status": "active"},
     )
-    assert process_batch(db, send_fn=_noop_send) >= 1
+    with caplog.at_level(logging.INFO, logger="app.outbox.services"):
+        assert process_batch(db, send_fn=_noop_send) >= 1
+    assert "outbox_send_ok" in caplog.text
     assert process_batch(db, send_fn=_noop_send) == 0
 
     def boom(*_a, **_k):
@@ -167,7 +171,10 @@ def test_mailer_noop_and_outbox(db: Session, client: TestClient):
         )
     )
     db.flush()
-    assert process_batch(db, send_fn=boom) == 1
+    with caplog.at_level(logging.WARNING, logger="app.outbox.services"):
+        assert process_batch(db, send_fn=boom) == 1
+    assert "outbox_send_failed" in caplog.text
+    assert "smtp down" in caplog.text
 
 
 def test_worker_run_once(db: Session, monkeypatch):

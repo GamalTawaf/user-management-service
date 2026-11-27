@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.audit.writer import write_audit
@@ -8,6 +10,8 @@ from app.orgs.models import Organization
 from app.shared.errors import FieldError, raise_validation
 from app.users.schemas import CreateOrgIn
 from app.users.services.common import validate_email
+
+_log = logging.getLogger(__name__)
 
 
 def create_organization(db: Session, admin: UserContext, body: CreateOrgIn) -> Organization:
@@ -44,4 +48,6 @@ def create_organization(db: Session, admin: UserContext, body: CreateOrgIn) -> O
     )
     db.commit()
     db.refresh(org)
+    org_id = str(org.uuid)
+    _log.info("org_create org_id=%s name=%s", org_id, org.name)
     return org

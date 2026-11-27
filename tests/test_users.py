@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi.testclient import TestClient
@@ -6,57 +7,64 @@ from sqlalchemy.orm import Session
 from tests.conftest import assert_has_error_code, role_headers
 
 
-def test_me_and_patch(client: TestClient):
+def test_me_and_patch(client: TestClient, caplog):
     me = client.get("/v1/me", headers=role_headers(client, "member"))
     assert me.status_code == 200
     assert me.json()["email"] == "member@example.com"
 
-    patched = client.patch(
-        "/v1/me",
-        headers=role_headers(client, "member"),
-        json={"display_name": "Alex Updated"},
-    )
+    with caplog.at_level(logging.INFO, logger="app.users.services.common"):
+        patched = client.patch(
+            "/v1/me",
+            headers=role_headers(client, "member"),
+            json={"display_name": "Alex Updated"},
+        )
     assert patched.status_code == 200
     assert patched.json()["display_name"] == "Alex Updated"
+    assert "user_mutation action=me_update" in caplog.text
 
 
-def test_create_activate_disable_enable_flow(client: TestClient):
-    created = client.post(
-        "/v1/users",
-        headers=role_headers(client, "admin"),
-        json={
-            "email": "newbie@example.com",
-            "display_name": "Newbie",
-            "role": "member",
-            "status": "invited",
-            "org_id": str(client.seed["org"].uuid),
-        },
-    )
-    assert created.status_code == 201, created.text
-    uid = created.json()["uuid"]
-    assert created.json()["status"] == "invited"
+def test_create_activate_disable_enable_flow(client: TestClient, caplog):
+    with caplog.at_level(logging.INFO, logger="app.users.services"):
+        created = client.post(
+            "/v1/users",
+            headers=role_headers(client, "admin"),
+            json={
+                "email": "newbie@example.com",
+                "display_name": "Newbie",
+                "role": "member",
+                "status": "invited",
+                "org_id": str(client.seed["org"].uuid),
+            },
+        )
+        assert created.status_code == 201, created.text
+        uid = created.json()["uuid"]
+        assert created.json()["status"] == "invited"
+        assert "user_create" in caplog.text
 
-    activated = client.post(
-        f"/v1/users/{uid}/activate",
-        headers=role_headers(client, "admin"),
-    )
-    assert activated.status_code == 200
-    assert activated.json()["status"] == "active"
+        activated = client.post(
+            f"/v1/users/{uid}/activate",
+            headers=role_headers(client, "admin"),
+        )
+        assert activated.status_code == 200
+        assert activated.json()["status"] == "active"
+        assert "user_mutation action=user_activate" in caplog.text
 
-    disabled = client.post(
-        f"/v1/users/{uid}/disable",
-        headers=role_headers(client, "admin"),
-    )
-    assert disabled.status_code == 200
-    assert disabled.json()["status"] == "disabled"
-    assert disabled.json()["disabled_at"] is not None
+        disabled = client.post(
+            f"/v1/users/{uid}/disable",
+            headers=role_headers(client, "admin"),
+        )
+        assert disabled.status_code == 200
+        assert disabled.json()["status"] == "disabled"
+        assert disabled.json()["disabled_at"] is not None
+        assert "user_mutation action=user_disable" in caplog.text
 
-    enabled = client.post(
-        f"/v1/users/{uid}/enable",
-        headers=role_headers(client, "admin"),
-    )
-    assert enabled.status_code == 200
-    assert enabled.json()["status"] == "active"
+        enabled = client.post(
+            f"/v1/users/{uid}/enable",
+            headers=role_headers(client, "admin"),
+        )
+        assert enabled.status_code == 200
+        assert enabled.json()["status"] == "active"
+        assert "user_mutation action=user_enable" in caplog.text
 
 
 def test_cannot_disable_self(client: TestClient):
@@ -127,7 +135,7 @@ def test_auditor_can_read_audit(client: TestClient):
     assert "me_update" in actions
 
 
-def test_stats_and_orgs(client: TestClient, db: Session):
+def test_stats_and_orgs(client: TestClient, db: Session, caplog):
     stats = client.get("/v1/users/stats", headers=role_headers(client, "admin"))
     assert stats.status_code == 200
     assert sum(row["count"] for row in stats.json()) >= 4
@@ -136,12 +144,14 @@ def test_stats_and_orgs(client: TestClient, db: Session):
     assert orgs.status_code == 200
     assert orgs.json()[0]["name"] == "Acme Workspace"
 
-    created = client.post(
-        "/v1/orgs",
-        headers=role_headers(client, "admin"),
-        json={"name": "Beta Co", "notification_email": "hi@beta.example.com"},
-    )
+    with caplog.at_level(logging.INFO, logger="app.users.services.orgs"):
+        created = client.post(
+            "/v1/orgs",
+            headers=role_headers(client, "admin"),
+            json={"name": "Beta Co", "notification_email": "hi@beta.example.com"},
+        )
     assert created.status_code == 201
+    assert "org_create" in caplog.text
     oid = created.json()["uuid"]
     got = client.get(f"/v1/orgs/{oid}", headers=role_headers(client, "auditor"))
     assert got.status_code == 200

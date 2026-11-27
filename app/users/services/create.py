@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,8 @@ from app.users.idempotency import store_record
 from app.users.schemas import CreateUserIn
 from app.users.serializers import to_user_out
 from app.users.services.common import validate_email
+
+_log = logging.getLogger(__name__)
 
 
 def create_user(
@@ -93,6 +97,7 @@ def create_user(
     if idempotency_key is None:
         db.commit()
         db.refresh(user)
+        _log_user_created(user)
         return user
 
     assert request_hash is not None
@@ -109,4 +114,12 @@ def create_user(
     )
     db.commit()
     db.refresh(user)
+    _log_user_created(user)
     return user
+
+
+def _log_user_created(user: User) -> None:
+    user_id = str(user.uuid)
+    role = user.role.value
+    status = user.status.value
+    _log.info("user_create user_id=%s role=%s status=%s", user_id, role, status)

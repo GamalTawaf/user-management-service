@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,6 +11,8 @@ from app.identity.models import User
 from app.orgs.models import Organization
 from app.outbox.mailer import send_smtp
 from app.outbox.models import OutboxEvent, OutboxKind, OutboxStatus
+
+_log = logging.getLogger(__name__)
 
 
 def enqueue_user_welcome(db: Session, user: User) -> OutboxEvent:
@@ -83,13 +87,16 @@ def process_batch(db: Session, *, send_fn=send_smtp, limit: int | None = None) -
     events = claim_batch(db, limit=limit)
     for event in events:
         payload = event.payload
+        event_id = str(event.uuid)
         try:
             send_fn(payload["to"], payload["subject"], payload["body"])
         except Exception as exc:
             err = str(exc)
             mark_failed(db, event, err)
+            _log.warning("outbox_send_failed event_id=%s error=%s", event_id, err)
         else:
             mark_sent(db, event)
+            _log.info("outbox_send_ok event_id=%s kind=%s", event_id, event.kind)
     if events:
         db.commit()
     return len(events)
