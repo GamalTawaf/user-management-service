@@ -7,7 +7,7 @@ All `.agent/feature_list.json` items **done** (`ums-001`).
 | Slice | What’s in the tree |
 |-------|--------------------|
 | Core | Orgs + users; admin/member/auditor RBAC; invited→active→disabled lifecycle; `/me`; audit-in-transaction; Idempotency-Key on create; stats |
-| Tooling | Alembic, seed JWTs, Compose (db/redis/api/outbox/maildev/otel), multi-stage Docker, CI (lint/test/mutate/image), mutmut on `app/users/services`, `demo.sh`, Postman generator |
+| Tooling | Alembic, seed JWTs, Compose (db/redis/api/outbox/maildev/otel), multi-stage Docker, CI (lint/test/mutate/image), mutmut on `app/users/service.py`, `demo.sh`, Postman generator |
 | Stretch | Outbox→MailDev, Redis token-bucket rate limiting + OTel, auditor role |
 
 **Verify:** `./init.sh` · `./scripts/gates.sh` · `./scripts/demo.sh`

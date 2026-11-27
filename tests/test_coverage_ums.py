@@ -9,7 +9,7 @@ from app.identity.models import UserRole
 from app.main import app
 from app.outbox.mailer import send_smtp
 from app.outbox.models import OutboxEvent, OutboxKind, OutboxStatus
-from app.outbox.services import process_batch
+from app.outbox.service import process_batch
 from app.outbox.worker import run_once
 from app.shared.errors import (
     BadRequestError,
@@ -154,7 +154,7 @@ def test_mailer_noop_and_outbox(db: Session, client: TestClient, caplog):
         headers=role_headers(client, "admin"),
         json={"email": "outbox@example.com", "display_name": "O", "status": "active"},
     )
-    with caplog.at_level(logging.INFO, logger="app.outbox.services"):
+    with caplog.at_level(logging.INFO, logger="app.outbox.service"):
         assert process_batch(db, send_fn=_noop_send) >= 1
     assert "outbox_send_ok" in caplog.text
     assert process_batch(db, send_fn=_noop_send) == 0
@@ -171,7 +171,7 @@ def test_mailer_noop_and_outbox(db: Session, client: TestClient, caplog):
         )
     )
     db.flush()
-    with caplog.at_level(logging.WARNING, logger="app.outbox.services"):
+    with caplog.at_level(logging.WARNING, logger="app.outbox.service"):
         assert process_batch(db, send_fn=boom) == 1
     assert "outbox_send_failed" in caplog.text
     assert "smtp down" in caplog.text
@@ -301,7 +301,7 @@ def test_pagination_after(client: TestClient):
     assert page2.status_code == 200
     # oldest-first path used by review-style lists — exercise helper via queue order on audit
     from app.identity.models import User
-    from app.users.services.common import apply_after_id
+    from app.users.service import apply_after_id
     from sqlalchemy import select
 
     stmt = select(User)

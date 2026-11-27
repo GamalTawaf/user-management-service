@@ -31,14 +31,12 @@ from app.users.schemas import (
     UserStatsOut,
 )
 from app.users.serializers import to_org_out, to_user_out
-from app.users.services.common import apply_after_id
-from app.users.services.common import get_user as load_user
-from app.users.services.create import create_user as create_user_svc
-from app.users.services.lifecycle import activate_user as activate_user_svc
-from app.users.services.lifecycle import disable_user as disable_user_svc
-from app.users.services.lifecycle import enable_user as enable_user_svc
-from app.users.services.orgs import create_organization
-from app.users.services.update import patch_me, update_user
+from app.users.service import activate_user as activate_user_svc
+from app.users.service import apply_after_id, create_organization, patch_me, update_user
+from app.users.service import create_user as create_user_svc
+from app.users.service import disable_user as disable_user_svc
+from app.users.service import enable_user as enable_user_svc
+from app.users.service import get_user as load_user
 
 router = APIRouter(tags=["users"], responses=OPENAPI_ERROR_RESPONSES)
 

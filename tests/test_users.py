@@ -18,7 +18,7 @@ def test_me_and_patch(client: TestClient, caplog):
     assert me.json()["email"] == "member@example.com"
 
     member_id = str(client.seed["member"].uuid)
-    with caplog.at_level(logging.INFO, logger="app.users.services.common"):
+    with caplog.at_level(logging.INFO, logger="app.users.service"):
         patched = client.patch(
             "/v1/me",
             headers=role_headers(client, "member"),
@@ -30,7 +30,7 @@ def test_me_and_patch(client: TestClient, caplog):
 
 
 def test_create_activate_disable_enable_flow(client: TestClient, caplog):
-    with caplog.at_level(logging.INFO, logger="app.users.services"):
+    with caplog.at_level(logging.INFO, logger="app.users.service"):
         created = client.post(
             "/v1/users",
             headers=role_headers(client, "admin"),
@@ -150,7 +150,7 @@ def test_stats_and_orgs(client: TestClient, db: Session, caplog):
     assert orgs.status_code == 200
     assert orgs.json()[0]["name"] == "Acme Workspace"
 
-    with caplog.at_level(logging.INFO, logger="app.users.services.orgs"):
+    with caplog.at_level(logging.INFO, logger="app.users.service"):
         created = client.post(
             "/v1/orgs",
             headers=role_headers(client, "admin"),

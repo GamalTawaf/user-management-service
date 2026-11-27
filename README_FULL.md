@@ -68,7 +68,7 @@ See [`README.md`](README.md). Compose services: `db`, `redis`, `api`, `outbox-wo
 ./scripts/gates.sh
 ```
 
-ruff · call-style · FastAPI compile · Postman fresh · pytest 100% coverage. Mutmut: `./scripts/run_mutmut.sh` (services under `app/users/services`).
+ruff · call-style · FastAPI compile · Postman fresh · pytest 100% coverage. Mutmut: `./scripts/run_mutmut.sh` (`app/users/service.py`).
 
 ## AI usage
 

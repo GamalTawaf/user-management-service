@@ -15,7 +15,7 @@ User Management API (public portfolio). Durable Python + PostgreSQL backend show
 
 ## Coding gates
 
-Mirrored in `.agent/rules/coding-gates.mdc`. Prefer `tests/conftest.py` helpers; extract shared utils at 2+ call sites; no nested call/condition style violations.
+Mirrored in `.agent/rules/coding-gates.mdc`. Prefer `tests/conftest.py` helpers; extract shared utils at 2+ call sites; no nested call/condition style violations. One `service.py` per domain (no `services/` packages).
 
 ## Layout
 
@@ -23,9 +23,9 @@ Mirrored in `.agent/rules/coding-gates.mdc`. Prefer `tests/conftest.py` helpers;
 app/
   identity/    # User, roles, JWT, RBAC
   orgs/        # Organization tenant
-  users/       # CRUD + lifecycle services/router
-  audit/       # AuditEvent + writer
-  outbox/      # welcome/status email worker
+  users/       # service.py + router (+ schemas/idempotency)
+  audit/       # models + service.write_audit
+  outbox/      # service.py + worker + mailer
   rate_limit/  # token-bucket middleware (Redis or in-process)
   shared/      # errors, deps, middleware
 ```
