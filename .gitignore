@@ -15,10 +15,10 @@ dist/
 .superpowers/
 .worktrees/
 worktrees/
-# Postman desktop sync dumps; keep generated Prior_Auth_API*.json tracked for docs links
+# Postman desktop sync dumps; keep generated User_Management_API*.json tracked
 .postman/
 postman/*
-!postman/Prior_Auth_API.postman_collection.json
-!postman/Prior_Auth_API.postman_environment.json
+!postman/User_Management_API.postman_collection.json
+!postman/User_Management_API.postman_environment.json
 
 .grit

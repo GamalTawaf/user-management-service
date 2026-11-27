@@ -14,6 +14,7 @@
 | Audit | Same DB transaction as state changes |
 | Notify | create/status → outbox → MailDev |
 | Idempotency | `Idempotency-Key` on `POST /v1/users` |
+| Rate limit | Token bucket per client IP; Redis or in-process; `429` + headers |
 
 ## Verify
 
@@ -27,4 +28,4 @@ uv run python scripts/seed.py
 
 ## Portfolio note
 
-Defend product code (lifecycle CHECKs, RBAC from DB, audit, outbox, idempotency) over agent tooling.
+Defend product code (lifecycle CHECKs, RBAC from DB, audit, outbox, idempotency, rate limit) over agent tooling.

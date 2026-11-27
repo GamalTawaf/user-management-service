@@ -1,5 +1,5 @@
 {
-  "description": "Desired GitHub repository settings for prior-auth-api (public portfolio). Apply with scripts/apply_github_repo_settings.sh.",
+  "description": "Desired GitHub repository settings for user-management-service (public portfolio). Apply with scripts/apply_github_repo_settings.sh.",
   "repository": {
     "allow_squash_merge": true,
     "allow_merge_commit": false,

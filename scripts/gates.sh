@@ -52,7 +52,7 @@ $(tail -n 20 "${out_file}")
   rm -f "${out_file}"
 }
 
-echo "=== Prior Auth API gates ==="
+echo "=== User Management API gates ==="
 echo "cwd=${ROOT}"
 
 run_step "ruff format check" uv run ruff format --check app tests scripts

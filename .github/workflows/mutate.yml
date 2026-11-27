@@ -9,7 +9,7 @@ on:
         required: true
 
 env:
-  DATABASE_URL: postgresql+psycopg://prior:prior@localhost:5432/prior_auth
+  DATABASE_URL: postgresql+psycopg://ums:ums@localhost:5432/user_mgmt
   JWT_SECRET: ci-secret-32-bytes-minimum-key!!
 
 jobs:
@@ -19,12 +19,12 @@ jobs:
       postgres:
         image: postgres:19
         env:
-          POSTGRES_USER: prior
-          POSTGRES_PASSWORD: prior
-          POSTGRES_DB: prior_auth
+          POSTGRES_USER: ums
+          POSTGRES_PASSWORD: ums
+          POSTGRES_DB: user_mgmt
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U prior -d prior_auth"
+          --health-cmd "pg_isready -U ums -d user_mgmt"
           --health-interval 2s
           --health-timeout 5s
           --health-retries 15
@@ -39,7 +39,7 @@ jobs:
       - name: alembic migrate
         if: ${{ inputs.code }}
         run: ./scripts/ci_run.sh "alembic upgrade head" -- uv run alembic upgrade head
-      - name: mutmut prior_auth services
+      - name: mutmut users services
         if: ${{ inputs.code }}
         env:
           MUTMUT_MAX_SURVIVORS: "0"

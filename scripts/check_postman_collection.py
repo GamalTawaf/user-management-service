@@ -4,7 +4,7 @@
 ISO dates in the env (date_of_service) are normalized so daily regenerate
 does not false-fail; everything else is a byte compare.
 
-Fix: ./scripts/generate_postman_collection.py && git add postman/Prior_Auth_API*.json
+Fix: ./scripts/generate_postman_collection.py && git add postman/User_Management_API*.json
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POSTMAN = ROOT / "postman"
 FILES = (
-    "Prior_Auth_API.postman_collection.json",
-    "Prior_Auth_API.postman_environment.json",
+    "User_Management_API.postman_collection.json",
+    "User_Management_API.postman_environment.json",
 )
 
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -69,7 +69,7 @@ def main() -> int:
         if drifted:
             print("Postman artifacts out of date.")
             print(
-                "Fix: ./scripts/generate_postman_collection.py && git add postman/Prior_Auth_API*.json"
+                "Fix: ./scripts/generate_postman_collection.py && git add postman/User_Management_API*.json"
             )
             return 1
 

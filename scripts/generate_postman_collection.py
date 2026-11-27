@@ -220,9 +220,8 @@ def main() -> None:
             {"key": "idempotency_key", "value": "postman-demo-key"},
         ],
     }
-    # Keep prior filenames so check_postman_collection.py paths stay stable for now.
-    coll_path = OUT / "Prior_Auth_API.postman_collection.json"
-    env_path = OUT / "Prior_Auth_API.postman_environment.json"
+    coll_path = OUT / "User_Management_API.postman_collection.json"
+    env_path = OUT / "User_Management_API.postman_environment.json"
     coll_path.write_text(json.dumps(collection, indent=2) + "\n")
     env_path.write_text(json.dumps(_environment(), indent=2) + "\n")
     print(f"Wrote {len(collection['item'])} requests to {OUT}")
