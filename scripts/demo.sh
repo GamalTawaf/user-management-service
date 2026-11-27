@@ -25,8 +25,15 @@ AUDITOR_TOKEN="$(echo "$SEED_OUT" | awk '/^  auditor:/{print $2}')"
 ORG_ID="$(echo "$SEED_OUT" | awk -F= '/^org_id=/{print $2}')"
 INVITED_ID="$(echo "$SEED_OUT" | awk -F= '/^invited_id=/{print $2}')"
 
+echo "=== login ==="
+LOGIN=$(curl -sf -X POST -H "Content-Type: application/json" \
+  -d '{"email":"member@example.com","password":"password12345"}' \
+  localhost:8000/v1/auth/login)
+echo "$LOGIN"
+LOGIN_TOKEN=$(echo "$LOGIN" | python -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+
 echo "=== me ==="
-curl -sf -H "Authorization: Bearer $MEMBER_TOKEN" localhost:8000/v1/me | tee /tmp/ums_me.json
+curl -sf -H "Authorization: Bearer $LOGIN_TOKEN" localhost:8000/v1/me | tee /tmp/ums_me.json
 echo
 
 echo "=== create user ==="

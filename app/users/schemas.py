@@ -15,6 +15,7 @@ class CreateUserIn(BaseModel):
     role: Literal["admin", "member", "auditor"] = "member"
     org_id: uuid.UUID | None = None
     status: Literal["invited", "active"] = "invited"
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class UpdateUserIn(BaseModel):

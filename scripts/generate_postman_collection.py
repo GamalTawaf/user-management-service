@@ -21,6 +21,10 @@ _POSTMAN_TOKEN_EXP = datetime(2099, 1, 1, tzinfo=UTC)
 _PATH_PARAM = re.compile(r"\{([^}/]+)\}")
 
 _DEMO_BODIES: dict[tuple[str, str], dict[str, Any]] = {
+    ("post", "/v1/auth/login"): {
+        "email": "member@example.com",
+        "password": "password12345",
+    },
     ("post", "/v1/users"): {
         "email": "new.user@example.com",
         "display_name": "New User",

@@ -60,7 +60,7 @@ Organizations are first-class tenants (`POST/GET /v1/orgs`). Users may optionall
 
 ### Cut list
 
-No real IdP, password reset flows, GraphQL, microservices, AWS deploy, SES. Local `.env.example` documents knobs; Compose injects its own env.
+No real IdP / SSO, password reset / MFA, GraphQL, microservices, AWS deploy, SES. Local login uses bcrypt hashes (`POST /v1/auth/login`). `.env.example` documents knobs; Compose injects its own env.
 
 ## How to run
 

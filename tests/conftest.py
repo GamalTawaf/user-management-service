@@ -27,6 +27,7 @@ from app.config import settings
 from app.db import APP_SCHEMA, Base, get_db
 from app.identity.auth import mint_token
 from app.identity.models import User, UserRole, UserStatus
+from app.identity.passwords import hash_password
 from app.main import app
 from app.orgs.models import Organization
 from app.outbox import models as _outbox_models  # noqa: F401
@@ -130,8 +131,12 @@ def db(engine) -> Generator[Session]:
         connection.close()
 
 
+SEED_PASSWORD = "password12345"
+
+
 @pytest.fixture
 def client(db: Session) -> Generator[TestClient]:
+    password_hash = hash_password(SEED_PASSWORD)
     org = Organization(
         uuid=uuid.UUID("11111111-1111-1111-1111-111111111111"),
         name="Acme Workspace",
@@ -144,6 +149,7 @@ def client(db: Session) -> Generator[TestClient]:
         role=UserRole.admin,
         status=UserStatus.active,
         org_id=org.uuid,
+        password_hash=password_hash,
     )
     member = User(
         uuid=uuid.UUID("66666666-6666-6666-6666-666666666666"),
@@ -152,6 +158,7 @@ def client(db: Session) -> Generator[TestClient]:
         role=UserRole.member,
         status=UserStatus.active,
         org_id=org.uuid,
+        password_hash=password_hash,
     )
     auditor = User(
         uuid=uuid.UUID("77777777-7777-7777-7777-777777777777"),
@@ -159,6 +166,7 @@ def client(db: Session) -> Generator[TestClient]:
         display_name="Audit Viewer",
         role=UserRole.auditor,
         status=UserStatus.active,
+        password_hash=password_hash,
     )
     invited = User(
         uuid=uuid.UUID("88888888-8888-8888-8888-888888888888"),
